@@ -16,15 +16,15 @@ interface PageData extends ComponentData {
   savedAt: Date
 }
 
-interface PageRecord<DataType extends ComponentData = ComponentData> {
+interface PageRecord<DataType extends PageData = PageData> {
   id: string
   linkId: string
   path: string
   data: DataType
 }
 
-interface PageWithAncestors<DataType extends ComponentData = ComponentData> extends PageRecord<DataType> {
-  ancestors: PageRecord<ComponentData>[]
+interface PageWithAncestors<DataType extends PageData = PageData> extends PageRecord<DataType> {
+  ancestors: PageRecord<PageData>[]
 }
 
 interface Migration {
@@ -77,7 +77,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * in case there is a need for inheritance. It is recommended to copy any needed data into
    * the return object, as future phases will not include the page data.
    */
-  abstract fetch (page: PageWithAncestors<ComponentData>): Promise<FetchedType>
+  abstract fetch (page: PageWithAncestors<PageData>): Promise<FetchedType>
 
   /**
    * The second phase of rendering a component is the context phase. This step is TOP-DOWN,
@@ -144,7 +144,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   }
 }
 
-export abstract class Page<DataType extends ComponentData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {
+export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {
   pagePath: string
 
   protected passError (e: Error, path: string) {

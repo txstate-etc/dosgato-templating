@@ -1,22 +1,40 @@
+import { sortby } from 'txstate-utils'
+import rfdc from 'rfdc'
+const clone = rfdc()
+
 interface AreaDefinition {
   name: string
   availableComponents: string[]
 }
 
 interface ComponentData {
-  template: string
+  templateKey: string
   areas: Record<string, ComponentData[]>
 }
 
-interface PageData<DataType extends ComponentData = ComponentData> {
+interface PageData extends ComponentData {
+  savedAt: Date
+}
+
+interface PageRecord<DataType extends ComponentData = ComponentData> {
   id: string
   linkId: string
   path: string
   data: DataType
 }
 
-interface PageWithAncestors<DataType extends ComponentData = ComponentData> extends PageData<DataType> {
-  ancestors: PageData<ComponentData>[]
+interface PageWithAncestors<DataType extends ComponentData = ComponentData> extends PageRecord<DataType> {
+  ancestors: PageRecord<ComponentData>[]
+}
+
+interface Migration {
+  createdAt: Date
+  up: (data: ComponentData) => ComponentData|Promise<ComponentData>
+  down: (data: ComponentData) => ComponentData|Promise<ComponentData>
+}
+
+interface MigrationWithTemplate extends Migration {
+  templateKey: string
 }
 
 interface ContextBase {
@@ -94,7 +112,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
       const areaComponents: Component[] = []
       for (let i = 0; i < componentList.length; i++) {
         const componentData = componentList[i]
-        const ComponentType = componentRegistry.get(componentData.template)
+        const ComponentType = componentRegistry.get(componentData.templateKey)
         if (ComponentType) areaComponents.push(new ComponentType(componentData, `${path}/${key}/${i}`, this))
       }
       this.areas.set(key, areaComponents)
@@ -104,6 +122,17 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     this.hadError = false
   }
 
+  logError (e: Error) {
+    this.hadError = true
+    this.parent?.passError(e, this.path)
+  }
+
+  protected passError (e: Error, path: string) {
+    this.parent?.passError(e, path)
+  }
+
+  static migrations: Migration[] = []
+
   /**
    * Use this function to extend a component after importing it. For instance,
    * if another developer writes a component for a carded layout, and you write a new
@@ -112,15 +141,6 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   static addAvailableComponent (area: string, templateKey: string) {
     this.areas.get(area)?.availableComponents.push(templateKey)
-  }
-
-  logError (e: Error) {
-    this.hadError = true
-    this.parent?.passError(e, this.path)
-  }
-
-  protected passError (e: Error, path: string) {
-    this.parent?.passError(e, path)
   }
 }
 
@@ -140,11 +160,21 @@ export abstract class Page<DataType extends ComponentData = any, FetchedType = a
 const componentRegistry = new Map<string, new (component: ComponentData, path: string, parent: Component) => Component>()
 const pageRegistry = new Map<string, new (page: PageWithAncestors) => Page>()
 
-function collectComponents (component: Component): Component[] {
+function collectComponents (component: Component) {
   const ret = [component]
   for (const areaList of component.areas.values()) {
     for (const component of areaList) {
       ret.push(...collectComponents(component))
+    }
+  }
+  return ret
+}
+
+function collectTemplates (component: ComponentData) {
+  const ret = [component.templateKey]
+  for (const areaList of Object.values(component.areas)) {
+    for (const component of areaList) {
+      ret.push(...collectTemplates(component))
     }
   }
   return ret
@@ -179,7 +209,7 @@ function renderComponent (component: Component): string {
 
 export async function renderPage (page: PageWithAncestors) {
   // find the page implementation in the registry
-  const PageType = pageRegistry.get(page.data.template)
+  const PageType = pageRegistry.get(page.data.templateKey)
   if (!PageType) throw new Error('Unable to render page. Missing template implementation.')
 
   // hydrate the page data into full objects
@@ -203,4 +233,39 @@ export async function renderPage (page: PageWithAncestors) {
 
   // execute the render phase
   return renderComponent(pageComponent)
+}
+
+async function processMigration (component: ComponentData, migration: MigrationWithTemplate, backward: boolean) {
+  const migrate = backward ? migration.down : migration.up
+  const newAreas: Record<string, Promise<ComponentData>[]> = {}
+
+  for (const [areaKey, areaList] of Object.entries(component.areas)) {
+    for (const cData of areaList) {
+      newAreas[areaKey].push(processMigration(cData, migration, backward))
+    }
+  }
+  for (const areaKey of Object.keys(component.areas)) {
+    component.areas[areaKey] = await Promise.all(newAreas[areaKey])
+  }
+  if (migration.templateKey === component.templateKey) component = await migrate(component)
+  return component
+}
+
+export async function migratePage (page: PageData, toSchemaVersion: Date = new Date()) {
+  let migrated = clone(page)
+  const templateKeysInUse = new Set(collectTemplates(page))
+  const fromSchemaVersion = page.savedAt
+  const backward = fromSchemaVersion > toSchemaVersion
+  const migrations = ([...pageRegistry.values(), ...componentRegistry.values()] as unknown as (typeof Component)[])
+    .flatMap(p => p.migrations.map(m => ({ ...m, templateKey: p.templateKey })))
+    .filter(m => templateKeysInUse.has(m.templateKey))
+    .filter(m => backward
+      ? m.createdAt < fromSchemaVersion && m.createdAt > toSchemaVersion
+      : m.createdAt > fromSchemaVersion && m.createdAt < toSchemaVersion
+    )
+  const sortedMigrations = sortby(migrations, 'createdAt', backward)
+
+  for (const migration of sortedMigrations) migrated = await processMigration(migrated, migration, backward) as PageData
+  migrated.savedAt = toSchemaVersion
+  return migrated
 }

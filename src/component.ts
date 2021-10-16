@@ -1,31 +1,55 @@
 import { sortby } from 'txstate-utils'
-import rfdc from 'rfdc'
-const clone = rfdc()
+import { getHostname } from './util'
+import stringify from 'fast-json-stable-stringify'
+import { templateRegistry } from './registry'
 
-interface AreaDefinition {
+export interface AreaDefinition {
   name: string
   availableComponents: string[]
 }
 
-interface ComponentData {
+export interface ComponentData {
   templateKey: string
   areas: Record<string, ComponentData[]>
 }
 
-interface PageData extends ComponentData {
+export interface PageData extends ComponentData {
   savedAtVersion: Date
 }
 
-interface PageRecord<DataType extends PageData = PageData> {
+export interface PageRecord<DataType extends PageData = PageData> {
   id: string
   linkId: string
   path: string
   data: DataType
 }
 
-interface PageWithAncestors<DataType extends PageData = PageData> extends PageRecord<DataType> {
+export interface PageWithAncestors<DataType extends PageData = PageData> extends PageRecord<DataType> {
   ancestors: PageRecord<PageData>[]
 }
+
+export interface AssetLink {
+  type: 'asset'
+  source: string
+  id: string
+  siteId: string
+  path: string
+  checksum: string
+}
+
+export interface PageLink {
+  type: 'page'
+  linkId: string
+  siteId: string
+  path: string
+}
+
+export interface WebLink {
+  type: 'url'
+  url: string
+}
+
+export type LinkDefinition = AssetLink | PageLink | WebLink
 
 /**
  * In dosgato CMS, the data in the database is not altered except during user activity. This
@@ -47,17 +71,17 @@ interface PageWithAncestors<DataType extends PageData = PageData> extends PageRe
  * Your `up` and `down` methods will be applied to components in bottom-up fashion, so you
  * can assume that any components inside one of your areas has already been processed.
  */
-interface Migration {
+export interface Migration {
   createdAt: Date
   up: (data: ComponentData) => ComponentData|Promise<ComponentData>
   down: (data: ComponentData) => ComponentData|Promise<ComponentData>
 }
 
-interface MigrationWithTemplate extends Migration {
+export interface MigrationWithTemplate extends Migration {
   templateKey: string
 }
 
-interface ContextBase {
+export interface ContextBase {
   /**
    * For accessibility, every component should consider whether it is creating headers
    * using h1-h6 tags, and set the context for its children so that they will use the
@@ -68,11 +92,6 @@ interface ContextBase {
    * This way every page will have a perfect header tree and avoid complaints from WAVE.
    */
   headerLevel: number
-}
-
-interface ResourceIdentifier {
-  type: 'js'|'css'
-  url: string
 }
 
 export abstract class Component<DataType extends ComponentData = any, FetchedType = any, RenderContextType extends ContextBase = any> {
@@ -131,6 +150,28 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   abstract render (renderedAreas: Map<string, string[]>, editMode: boolean): string
 
   /**
+   * Sometimes pages are requested with an alternate extension like .rss or .ics. In these
+   * situations, each component should consider whether it should output anything. For
+   * instance, if the extension is .rss and a component represents an article, it should
+   * probably output an RSS item. If you don't recognize the extension, just return
+   * Array.from(renderedAreas.values()).join('') to give your child components a chance to
+   * respond, or return empty string if you want your child components to be silent in all
+   * cases.
+   *
+   * This function will be run after the fetch phase. The context and html rendering phases
+   * will be skipped.
+   */
+  renderVariation (extension: string, renderedAreas: Map<string, string>) {
+    return Array.from(renderedAreas.values()).join('')
+  }
+
+  /**
+   * Component data is unrestricted in its structure, so in order to index pages by the links
+   * they contain, we need each component implementation to extract links from their data.
+   */
+  abstract links (): LinkDefinition[]
+
+  /**
    * Return any css resources that might belong in the head. You can host these however you
    * wish. Duplicates will be eliminated.
    */
@@ -156,7 +197,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
       const areaComponents: Component[] = []
       for (let i = 0; i < componentList.length; i++) {
         const componentData = componentList[i]
-        const ComponentType = componentRegistry.get(componentData.templateKey)
+        const ComponentType = templateRegistry.components.get(componentData.templateKey)
         if (ComponentType) areaComponents.push(new ComponentType(componentData, `${path}/${key}/${i}`, this))
         else this.logError(new Error(`Template ${componentData.templateKey} is in the page data but no template code has been registered for it.`))
       }
@@ -214,16 +255,6 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
     this.pagePath = page.path
   }
 }
-
-/**
- * These registries will get filled with Component and Page objects upon server startup. Each
- * instance of dosgato CMS will have a repo where the server administrator can import all the
- * Component and Page objects that will be available in their instance and pass them to the
- * API Server, Rendering Server, and Admin UI Server. This is how server owners have control
- * over their installations and opt-in to whatever templates they want to have/support.
- */
-export const componentRegistry = new Map<string, new (component: ComponentData, path: string, parent: Component) => Component>()
-export const pageRegistry = new Map<string, new (page: PageRecord) => Page>()
 
 // recursive helper function to traverse a hydrated page and return a flat array
 // of Component instances
@@ -284,6 +315,25 @@ function renderComponent (editMode: boolean) {
   return renderFn
 }
 
+// recursive helper function for rendering a variation of a page
+function renderVariation (extension: string) {
+  const renderFn = (component: Component) => {
+    if (component.hadError) return ''
+    const renderedAreas = new Map<string, string>()
+    for (const [key, list] of component.areas) {
+      const areaList = list.map(renderFn)
+      renderedAreas.set(key, areaList.join(''))
+    }
+    try {
+      return component.renderVariation(extension, renderedAreas)
+    } catch (e: any) {
+      component.logError(e)
+      return ''
+    }
+  }
+  return renderFn
+}
+
 // helper function to convert a non-hydrated page into a hydrated page
 // in other words, the input to this function is a raw JSON object, as stored in the
 // database, and the output is a Page object, containing many Component objects, all
@@ -291,7 +341,7 @@ function renderComponent (editMode: boolean) {
 // process
 function hydratePage (page: PageRecord) {
   // find the page implementation in the registry
-  const PageType = pageRegistry.get(page.data.templateKey)
+  const PageType = templateRegistry.pages.get(page.data.templateKey)
   if (!PageType) throw new Error('Unable to render page. Missing template implementation.')
 
   // hydrate the page data into full objects
@@ -306,7 +356,7 @@ function hydratePage (page: PageRecord) {
  * Any migrations should be completed before rendering a page. They probably already happened
  * in the API Server.
  */
-export async function renderPage (page: PageWithAncestors, editMode = false) {
+export async function renderPage (requestHeaders: Record<string, string>, page: PageWithAncestors, extension: string, editMode = false) {
   const pageComponent = hydratePage(page)
   const componentsIncludingPage = collectComponents(pageComponent)
 
@@ -322,8 +372,11 @@ export async function renderPage (page: PageWithAncestors, editMode = false) {
     }
   }))
 
+  // if this is a variation, go ahead and render after the fetch phase
+  if (extension && extension !== 'html') return renderVariation(extension)(pageComponent)
+
   // execute the context phase
-  pageComponent.renderCtx = await pageComponent.setContext({ headerLevel: 1 }, editMode)
+  pageComponent.renderCtx = await pageComponent.setContext({ headerLevel: 1, requestHeaders }, editMode)
   await executeSetContext(editMode)(pageComponent)
 
   // provide content for the <head> element and give it to the page component
@@ -368,14 +421,13 @@ async function processMigration (component: ComponentData, migration: MigrationW
  * manipulating their internals.
  */
 export async function migratePage (page: PageData, toSchemaVersion: Date = new Date()) {
-  let migrated = clone(page)
   const templateKeysInUse = new Set(collectTemplates(page))
   const fromSchemaVersion = page.savedAtVersion
   const backward = fromSchemaVersion > toSchemaVersion
   // collect all the migrations from every component in the registry and filter out
   // the ones this page does not use or that are outside the time range in which we are
   // performing our transformation
-  const migrations = ([...pageRegistry.values(), ...componentRegistry.values()] as unknown as (typeof Component)[])
+  const migrations = templateRegistry.all
     .filter(p => templateKeysInUse.has(p.templateKey))
     .flatMap(p => p.migrations.map(m => ({ ...m, templateKey: p.templateKey })))
     .filter(m => backward
@@ -388,26 +440,62 @@ export async function migratePage (page: PageData, toSchemaVersion: Date = new D
   // order)
   const sortedMigrations = sortby(migrations, 'createdAt', backward)
 
-  for (const migration of sortedMigrations) migrated = await processMigration(migrated, migration, backward) as PageData
-  migrated.savedAtVersion = toSchemaVersion
-  return migrated
+  for (const migration of sortedMigrations) page = await processMigration(page, migration, backward) as PageData
+  page.savedAtVersion = toSchemaVersion
+  return page
 }
 
 function editModeIncludes () {
   return '' // TODO: include script and css to support implementation of edit bars
 }
 
-/**
- * We will want to cache the migration process based on the page version and schema version
- * identifiers. So we want to stabilize the schema version rather than just saying "give me
- * the page at today's date". This function can help with that stabilization by finding the
- * last migration date in the current system so that API clients can detect and reuse it.
- *
- * It could also be done by hand and saved hard-coded in a client so that it has a predictable
- * view of the data, but an automated method will probably be more convenient.
- */
-export function getCurrentSchemaVersion () {
-  return new Date(Math.max(...([...pageRegistry.values(), ...componentRegistry.values()] as unknown as (typeof Component)[])
-    .flatMap(p => p.migrations.map(m => m.createdAt.getTime()))
-  ))
+function processLink (link: LinkDefinition): { name: 'link_asset'|'link_page'|'link_hostname', value: any }[] {
+  if (link.type === 'asset') {
+    return [
+      { name: 'link_asset', value: { source: link.source, id: link.id } },
+      { name: 'link_asset', value: { siteId: link.siteId, path: link.path } },
+      { name: 'link_asset', value: { checksum: link.checksum } }
+    ]
+  } else if (link.type === 'page') {
+    return [
+      { name: 'link_page', value: { linkId: link.linkId } },
+      { name: 'link_page', value: { siteId: link.siteId, path: link.path } }
+    ]
+  } else {
+    const hostname = getHostname(link.url)
+    if (!hostname) return []
+    return [{ name: 'link_hostname', value: hostname }]
+  }
+}
+
+export function getPageIndexes (page: Page) {
+  const storage = {
+    link_asset: {
+      name: 'link_asset',
+      values: new Set<string>()
+    },
+    link_page: {
+      name: 'link_page',
+      values: new Set<string>()
+    },
+    link_hostname: {
+      name: 'link_hostname',
+      values: new Set<string>()
+    },
+    templateKey: {
+      name: 'templateKey',
+      values: new Set<string>()
+    }
+  }
+  const components = collectComponents(page)
+  const indexes = components.flatMap(c => c.links().flatMap(processLink))
+  for (const index of indexes) {
+    storage[index.name].values.add(stringify(index.value))
+  }
+  const templateKeys = new Set(components.map(c => (c.constructor as typeof Component).templateKey))
+  const ret = storage as any
+  ret.link_asset.values = Array.from(ret.link_asset.values)
+  ret.link_page.values = Array.from(ret.link_page.values)
+  ret.link_hostname.values = Array.from(ret.link_hostname.values)
+  return [ret.link_asset, ret.link_page, ret.link_hostname, Array.from(templateKeys)] as { name: string, values: string[] }[]
 }

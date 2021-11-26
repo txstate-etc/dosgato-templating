@@ -1,18 +1,3 @@
-export function getHostname (urlString: string) {
-  if (!urlString) return undefined
-  urlString = urlString.trim()
-  if (/^(data|view-source):/i.test(urlString)) {
-    return undefined
-  }
-  if (urlString.startsWith('//')) urlString = 'http:' + urlString
-  try {
-    const urlObject = new URL(urlString)
-    return urlObject.hostname
-  } catch (e: any) {
-    return undefined
-  }
-}
-
 export function parsePath (path: string) {
   path = (path.startsWith('/') ? '' : '/') + (path.endsWith('/') ? path.substr(0, -1) : path)
   return {

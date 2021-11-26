@@ -16,37 +16,69 @@ class RenderingServer extends Server {
   constructor (config: FastifyTxStateOptions) {
     super(config)
     void this.app.register(cookie)
-    this.app.get<{ Params: { '*': string, siteId: string, pagetreeId: string, version: string }, Querystring: { token?: string } }>(
-      '/.preview/:siteId/:pagetreeId/:version/*',
+
+    /**
+     * Route for preview renders - no edit bars, no anonymous access
+     */
+    this.app.get<{ Params: { '*': string, pagetreeId: string, version: string }, Querystring: { token?: string } }>(
+      '/.preview/:pagetreeId/:version/*',
       async req => {
         const { path, extension } = parsePath(req.params['*'])
         const published = req.params.version === 'public' ? true : undefined
         const version = published ? undefined : (parseInt(req.params.version) || undefined)
-        const page = await api.getPreviewPage(getToken(req), req.params.siteId, req.params.pagetreeId, path, templateRegistry.schemaversion, published, version)
+        const page = await api.getPreviewPage(getToken(req), req.params.pagetreeId, path, templateRegistry.schemaversion, published, version)
         if (!page) throw new HttpError(404)
-        return await renderPage(page, extension, false)
-      })
-    this.app.get<{ Params: { '*': string, siteId: string, pagetreeId: string, version: string }, Querystring: { token?: string } }>(
-      '/.edit/:siteId/:pagetreeId/*',
+        return await renderPage(req.headers, page, extension, false)
+      }
+    )
+
+    /**
+     * Route for editing renders - has edit bars, no anonymous access
+     */
+    this.app.get<{ Params: { '*': string, pagetreeId: string, version: string }, Querystring: { token?: string } }>(
+      '/.edit/:pagetreeId/*',
       async req => {
         const { path, extension } = parsePath(req.params['*'])
-        const page = await api.getPreviewPage(getToken(req), req.params.siteId, req.params.pagetreeId, path, templateRegistry.schemaversion)
+        const page = await api.getPreviewPage(getToken(req), req.params.pagetreeId, path, templateRegistry.schemaversion)
         if (!page) throw new HttpError(404)
-        return await renderPage(page, extension, true)
-      })
-    this.app.get<{ Params: { '*': string, templateKey: string, ext: string } }>('/.resources/:templateKey/:ext', async (req, res) => {
-      const template = templateRegistry.getTemplate(req.params.templateKey) as any
-      if (!template) throw new HttpError(404)
-      if (req.params.ext === 'css') return template.css
-      else if (req.params.ext === 'js') return template.javascript
+        return await renderPage(req.headers, page, extension, true)
+      }
+    )
+
+    /**
+     * Route for fetching CSS and JS from our registered templates, anonymous OK
+     */
+    this.app.get<{ Params: { '*': string, version: string, blockName: string, ext: string } }>('/.resources/:version/:blockName.:ext', async (req, res) => {
+      const block = req.params.ext.includes('css')
+        ? templateRegistry.cssblocks.get(req.params.blockName)
+        : templateRegistry.jsblocks.get(req.params.blockName)
+      if (!block) throw new HttpError(404)
+      await res.header('Cache-Control', 'max-age=31536000, immutable')
+      if ('css' in block && req.params.ext === 'css') {
+        await res.type('text/css')
+        if ((block.map?.length ?? 0) > 0) await res.header('SourceMap', `/.resources/${req.params.version}/${req.params.blockName}.css.map`)
+        return block.css
+      } else if ('js' in block && req.params.ext === 'js') {
+        await res.type('text/javascript')
+        if ((block.map?.length ?? 0) > 0) await res.header('SourceMap', `/.resources/${req.params.version}/${req.params.blockName}.js.map`)
+        return block.js
+      } else if (req.params.ext === 'css.map') {
+        return block.map ?? ''
+      } else if (req.params.ext === 'js.map') {
+        return block.map ?? ''
+      }
       throw new HttpError(404)
     })
+
+    /**
+     * Route to serve launched web pages to anonymous users
+     */
     this.app.get<{ Params: { '*': string } }>('*', async req => {
       const { path, extension } = parsePath(req.params['*'])
 
       const page = await api.getLaunchedPage(req.hostname, path, templateRegistry.schemaversion)
       if (!page) throw new HttpError(404)
-      return await renderPage(page, extension, false)
+      return await renderPage(req.headers, page, extension, false)
     })
   }
 }

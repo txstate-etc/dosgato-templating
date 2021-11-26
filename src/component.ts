@@ -1,21 +1,6 @@
-import { sortby } from 'txstate-utils'
-import { getHostname } from './util'
-import stringify from 'fast-json-stable-stringify'
+import { IncomingHttpHeaders } from 'http'
 import { templateRegistry } from './registry'
-
-export interface AreaDefinition {
-  name: string
-  availableComponents: string[]
-}
-
-export interface ComponentData {
-  templateKey: string
-  areas: Record<string, ComponentData[]>
-}
-
-export interface PageData extends ComponentData {
-  savedAtVersion: Date
-}
+import { PageData, ComponentData } from './sharedtypes'
 
 export interface PageRecord<DataType extends PageData = PageData> {
   id: string
@@ -26,59 +11,6 @@ export interface PageRecord<DataType extends PageData = PageData> {
 
 export interface PageWithAncestors<DataType extends PageData = PageData> extends PageRecord<DataType> {
   ancestors: PageRecord<PageData>[]
-}
-
-export interface AssetLink {
-  type: 'asset'
-  source: string
-  id: string
-  siteId: string
-  path: string
-  checksum: string
-}
-
-export interface PageLink {
-  type: 'page'
-  linkId: string
-  siteId: string
-  path: string
-}
-
-export interface WebLink {
-  type: 'url'
-  url: string
-}
-
-export type LinkDefinition = AssetLink | PageLink | WebLink
-
-/**
- * In dosgato CMS, the data in the database is not altered except during user activity. This
- * means that older records could have been saved when the schema expected by component
- * rendering code was different than the date it's being rendered. To handle this, each
- * page and component template is required to provide migrations responsible for
- * transforming the data to the needed schema version.
- *
- * In order to support backwards compatibility, each API client will specify the date
- * when the code was written, so that their assumptions about the schema will be
- * frozen in time. This system means that migrations need to run backward as well as forward
- * in time.
- *
- * The `up` method is for changing data from an older schema to a newer one. The
- * `down` method is for changing data back from the newer schema to the older one.
- * If a `down` method cannot be provided, the migration is considered to be a breaking
- * change and anyone asking to rewind time to before the migration will receive an error.
- *
- * Your `up` and `down` methods will be applied to components in bottom-up fashion, so you
- * can assume that any components inside one of your areas has already been processed.
- */
-export interface Migration {
-  createdAt: Date
-  up: (data: ComponentData) => ComponentData|Promise<ComponentData>
-  down: (data: ComponentData) => ComponentData|Promise<ComponentData>
-}
-
-export interface MigrationWithTemplate extends Migration {
-  templateKey: string
 }
 
 export interface ContextBase {
@@ -101,7 +33,6 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Each component template is responsible for declaring its areas and the types of component
    * that can fit into the area.
    */
-  static areas = new Map<string, AreaDefinition>()
   public areas = new Map<string, Component[]>()
 
   data: Omit<DataType, 'areas'>
@@ -154,7 +85,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * situations, each component should consider whether it should output anything. For
    * instance, if the extension is .rss and a component represents an article, it should
    * probably output an RSS item. If you don't recognize the extension, just return
-   * Array.from(renderedAreas.values()).join('') to give your child components a chance to
+   * super.renderVariation(extension, renderedAreas) to give your child components a chance to
    * respond, or return empty string if you want your child components to be silent in all
    * cases.
    *
@@ -163,28 +94,6 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   renderVariation (extension: string, renderedAreas: Map<string, string>) {
     return Array.from(renderedAreas.values()).join('')
-  }
-
-  /**
-   * Component data is unrestricted in its structure, so in order to index pages by the links
-   * they contain, we need each component implementation to extract links from their data.
-   */
-  abstract links (): LinkDefinition[]
-
-  /**
-   * Return any css resources that might belong in the head. You can host these however you
-   * wish. Duplicates will be eliminated.
-   */
-  cssUrls () {
-    return [] as string[]
-  }
-
-  /**
-   * Return any js resources that might belong in the head. You can host these however you
-   * wish. Duplicates will be eliminated.
-   */
-  jsUrls () {
-    return [] as string[]
   }
 
   // the constructor is part of the recursive hydration mechanism: constructing
@@ -221,18 +130,46 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     this.parent?.passError(e, path)
   }
 
-  static migrations: Migration[] = []
-  static javascript: string = ''
-  static css: string = ''
+  /**
+   * Each template should provide a map of CSS blocks where the map key is the unique name for
+   * the CSS and the value is the CSS itself. For instance, if a template needs CSS from a
+   * standard library like jquery-ui, it could include the full CSS for jquery-ui with 'jquery-ui'
+   * as the key. Other templates that depend on jquery-ui would also provide the CSS, but
+   * a page with both components would only include the CSS once, because they both called it
+   * 'jquery-ui'.
+   *
+   * A version string (e.g. '1.2.5') may be provided for each block. The block with the highest
+   * version number of any given name will be used. Other versions of that name will be ignored.
+   */
+  static cssBlocks () {
+    return new Map<string, { css: string, version?: string }>()
+  }
 
   /**
-   * Use this function to extend a component after importing it. For instance,
-   * if another developer writes a component for a carded layout, and you write a new
-   * card that fits in that layout, you can add your custom card to its availableComponents
-   * while constructing your individual CMS server.
+   * Same as cssBlocks() but for javascript.
    */
-  static addAvailableComponent (area: string, templateKey: string) {
-    this.areas.get(area)?.availableComponents.push(templateKey)
+  static jsBlocks () {
+    return new Map<string, { js: string, version?: string }>()
+  }
+
+  /**
+   * During rendering, each component should register the CSS blocks that it needs. This may
+   * change depending on the data. For instance, if you need some CSS to style up an image, but
+   * only when the editor uploaded an image, you can check whether the image is present during
+   * the execution of this function.
+   *
+   * This is evaluated after the fetch and context phases but before the rendering phase. If you
+   * need any async data to make this determination, be sure to fetch it during the fetch phase.
+   */
+  cssBlocks (): string[] {
+    return (this.constructor as any).cssBlocks().keys()
+  }
+
+  /**
+   * Same as cssBlocks() but for javascript.
+   */
+  jsBlocks (): string[] {
+    return (this.constructor as any).jsBlocks().keys()
   }
 }
 
@@ -263,18 +200,6 @@ function collectComponents (component: Component) {
   for (const areaList of component.areas.values()) {
     for (const component of areaList) {
       ret.push(...collectComponents(component))
-    }
-  }
-  return ret
-}
-
-// recursive helper function to traverse a non-hydrated page and return a flat
-// array of templateKey strings in use on the page
-function collectTemplates (component: ComponentData) {
-  const ret = [component.templateKey]
-  for (const areaList of Object.values(component.areas)) {
-    for (const component of areaList) {
-      ret.push(...collectTemplates(component))
     }
   }
   return ret
@@ -356,7 +281,7 @@ function hydratePage (page: PageRecord) {
  * Any migrations should be completed before rendering a page. They probably already happened
  * in the API Server.
  */
-export async function renderPage (requestHeaders: Record<string, string>, page: PageWithAncestors, extension: string, editMode = false) {
+export async function renderPage (requestHeaders: IncomingHttpHeaders, page: PageWithAncestors, extension: string, editMode = false) {
   const pageComponent = hydratePage(page)
   const componentsIncludingPage = collectComponents(pageComponent)
 
@@ -381,121 +306,14 @@ export async function renderPage (requestHeaders: Record<string, string>, page: 
 
   // provide content for the <head> element and give it to the page component
   pageComponent.headContent = (editMode ? editModeIncludes() : '') + [
-    ...Array.from(new Set(componentsIncludingPage.flatMap(r => r.jsUrls()))).map(url => `<script src="${url}"></script>`),
-    ...Array.from(new Set(componentsIncludingPage.flatMap(r => r.cssUrls()))).map(url => `<link rel="stylesheet" href="${url}">`),
-    ...jsComponents.map(templateKey => `<script src="/.resources/${templateKey}.js"></script>`),
-    ...cssComponents.map(templateKey => `<link rel="stylesheet" href="/.resources/${templateKey}.css">`)
+    ...Array.from(new Set(componentsIncludingPage.flatMap(r => r.jsBlocks()))).map(name => `<script src="/.resources/${templateRegistry.resourceversion}/${name}.js"></script>`),
+    ...Array.from(new Set(componentsIncludingPage.flatMap(r => r.cssBlocks()))).map(name => `<link rel="stylesheet" href="/.resources/${templateRegistry.resourceversion}/${name}.css">`)
   ].join('\n')
 
   // execute the render phase
   return renderComponent(editMode)(pageComponent)
 }
 
-// recursive helper function to traverse a page and apply one migration to any applicable
-// components
-async function processMigration (component: ComponentData, migration: MigrationWithTemplate, backward: boolean) {
-  const migrate = backward ? migration.down : migration.up
-  const newAreas: Record<string, Promise<ComponentData>[]> = {}
-
-  for (const [areaKey, areaList] of Object.entries(component.areas)) {
-    for (const cData of areaList) {
-      newAreas[areaKey].push(processMigration(cData, migration, backward))
-    }
-  }
-  for (const areaKey of Object.keys(component.areas)) {
-    component.areas[areaKey] = await Promise.all(newAreas[areaKey])
-  }
-  if (migration.templateKey === component.templateKey) component = await migrate(component)
-  return component
-}
-
-/**
- * This function represents the entire process of migrating a page from one schema version
- * to another.
- *
- * Schema versions are represented as Dates so that components built by different authors
- * can be mixed and matched and have their migrations placed on a single timeline. It
- * could still get complicated if a third party component is not upgraded for some time and
- * the page component has done something to alter it in the mean time. That shouldn't pop up
- * often as usually the page's interest is in re-organizing components rather than
- * manipulating their internals.
- */
-export async function migratePage (page: PageData, toSchemaVersion: Date = new Date()) {
-  const templateKeysInUse = new Set(collectTemplates(page))
-  const fromSchemaVersion = page.savedAtVersion
-  const backward = fromSchemaVersion > toSchemaVersion
-  // collect all the migrations from every component in the registry and filter out
-  // the ones this page does not use or that are outside the time range in which we are
-  // performing our transformation
-  const migrations = templateRegistry.all
-    .filter(p => templateKeysInUse.has(p.templateKey))
-    .flatMap(p => p.migrations.map(m => ({ ...m, templateKey: p.templateKey })))
-    .filter(m => backward
-      ? m.createdAt < fromSchemaVersion && m.createdAt > toSchemaVersion
-      : m.createdAt > fromSchemaVersion && m.createdAt < toSchemaVersion
-    )
-  // now that we have a big list of migrations, we need to sort them by date to
-  // make sure they go in order (e.g. if component A has a migration between the two
-  // migrations specified by component B, we need to sort so we can run them in proper
-  // order)
-  const sortedMigrations = sortby(migrations, 'createdAt', backward)
-
-  for (const migration of sortedMigrations) page = await processMigration(page, migration, backward) as PageData
-  page.savedAtVersion = toSchemaVersion
-  return page
-}
-
 function editModeIncludes () {
   return '' // TODO: include script and css to support implementation of edit bars
-}
-
-function processLink (link: LinkDefinition): { name: 'link_asset'|'link_page'|'link_hostname', value: any }[] {
-  if (link.type === 'asset') {
-    return [
-      { name: 'link_asset', value: { source: link.source, id: link.id } },
-      { name: 'link_asset', value: { siteId: link.siteId, path: link.path } },
-      { name: 'link_asset', value: { checksum: link.checksum } }
-    ]
-  } else if (link.type === 'page') {
-    return [
-      { name: 'link_page', value: { linkId: link.linkId } },
-      { name: 'link_page', value: { siteId: link.siteId, path: link.path } }
-    ]
-  } else {
-    const hostname = getHostname(link.url)
-    if (!hostname) return []
-    return [{ name: 'link_hostname', value: hostname }]
-  }
-}
-
-export function getPageIndexes (page: Page) {
-  const storage = {
-    link_asset: {
-      name: 'link_asset',
-      values: new Set<string>()
-    },
-    link_page: {
-      name: 'link_page',
-      values: new Set<string>()
-    },
-    link_hostname: {
-      name: 'link_hostname',
-      values: new Set<string>()
-    },
-    templateKey: {
-      name: 'templateKey',
-      values: new Set<string>()
-    }
-  }
-  const components = collectComponents(page)
-  const indexes = components.flatMap(c => c.links().flatMap(processLink))
-  for (const index of indexes) {
-    storage[index.name].values.add(stringify(index.value))
-  }
-  const templateKeys = new Set(components.map(c => (c.constructor as typeof Component).templateKey))
-  const ret = storage as any
-  ret.link_asset.values = Array.from(ret.link_asset.values)
-  ret.link_page.values = Array.from(ret.link_page.values)
-  ret.link_hostname.values = Array.from(ret.link_hostname.values)
-  return [ret.link_asset, ret.link_page, ret.link_hostname, Array.from(templateKeys)] as { name: string, values: string[] }[]
 }

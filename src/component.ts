@@ -1,5 +1,4 @@
-import { IncomingHttpHeaders } from 'http'
-import { templateRegistry } from './registry'
+import { ResourceProvider } from './provider'
 import { PageData, ComponentData } from './sharedtypes'
 
 export interface PageRecord<DataType extends PageData = PageData> {
@@ -26,15 +25,21 @@ export interface ContextBase {
   headerLevel: number
 }
 
-export abstract class Component<DataType extends ComponentData = any, FetchedType = any, RenderContextType extends ContextBase = any> {
+/**
+ * This is the primary templating class to build your templates. Subclass it and provide
+ * at least a render function.
+ *
+ * During rendering, it will be "hydrated" - placed into a full page structure with its
+ * parent and child components linked.
+ */
+export abstract class Component<DataType extends ComponentData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends ResourceProvider {
+  // properties each template should provide
   static templateKey: string
   static templateName: string
-  /**
-   * Each component template is responsible for declaring its areas and the types of component
-   * that can fit into the area.
-   */
-  public areas = new Map<string, Component[]>()
 
+  // properties for use during hydration, you do not have to provide these when
+  // building a template, but you can use them in the functions you do provide
+  areas = new Map<string, Component[]>()
   data: Omit<DataType, 'areas'>
   fetched!: FetchedType
   renderCtx!: RenderContextType
@@ -44,16 +49,19 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   hadError: boolean
 
   /**
-   * The first phase of rendering a component is the fetch phase. Each component should
+   * The first phase of rendering a component is the fetch phase. Each component may
    * provide a fetch method that looks up data it needs from external sources. This step
    * is FLAT - it will be executed concurrently for all the components on the page for
    * maximum speed.
    *
-   * Note that the page parameter will be pre-loaded with all the data from ancestor pages,
-   * in case there is a need for inheritance. It is recommended to copy any needed data into
-   * the return object, as future phases will not include the page data.
+   * Note that this.page will be available, along with its ancestors property containing
+   * all the data from ancestor pages, in case there is a need for inheritance. It is
+   * recommended to copy any needed data into the return object, as future phases will not
+   * want to resolve the inheritance again.
    */
-  abstract fetch (page: PageWithAncestors<PageData>, editMode: boolean): Promise<FetchedType>
+  async fetch (editMode: boolean) {
+    return undefined as unknown as FetchedType
+  }
 
   /**
    * The second phase of rendering a component is the context phase. This step is TOP-DOWN,
@@ -70,7 +78,9 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * the context received from the parent, but use it sparingly since it will stall the process.
    * Try to do all asynchronous work in the fetch phase.
    */
-  abstract setContext (renderCtxFromParent: RenderContextType, editMode: boolean): RenderContextType|Promise<RenderContextType>
+  setContext (renderCtxFromParent: RenderContextType, editMode: boolean): RenderContextType|Promise<RenderContextType> {
+    return renderCtxFromParent
+  }
 
   /**
    * The final phase of rendering a component is the render phase. This step is BOTTOM-UP -
@@ -99,19 +109,9 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   // the constructor is part of the recursive hydration mechanism: constructing
   // a Component will also construct/hydrate all its child components
   constructor (data: DataType, path: string, parent: Component|undefined) {
+    super()
     this.parent = parent
     const { areas, ...ownData } = data
-    for (const key of Object.keys(areas)) {
-      const componentList = areas[key]
-      const areaComponents: Component[] = []
-      for (let i = 0; i < componentList.length; i++) {
-        const componentData = componentList[i]
-        const ComponentType = templateRegistry.components.get(componentData.templateKey)
-        if (ComponentType) areaComponents.push(new ComponentType(componentData, `${path}/${key}/${i}`, this))
-        else this.logError(new Error(`Template ${componentData.templateKey} is in the page data but no template code has been registered for it.`))
-      }
-      this.areas.set(key, areaComponents)
-    }
     this.data = ownData
     this.path = path
     this.hadError = false
@@ -121,35 +121,19 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     this.page = tmpParent
   }
 
+  /**
+   * For logging errors during rendering without crashing the render. If your fetch, setContext,
+   * render, or renderVariation functions throw, the error will be logged but the page render will
+   * continue. You generally do not need to use this function, just throw when appropriate.
+   */
   logError (e: Error) {
     this.hadError = true
     this.parent?.passError(e, this.path)
   }
 
+  // helper function for recursively passing the error up until it reaches the page
   protected passError (e: Error, path: string) {
     this.parent?.passError(e, path)
-  }
-
-  /**
-   * Each template should provide a map of CSS blocks where the map key is the unique name for
-   * the CSS and the value is the CSS itself. For instance, if a template needs CSS from a
-   * standard library like jquery-ui, it could include the full CSS for jquery-ui with 'jquery-ui'
-   * as the key. Other templates that depend on jquery-ui would also provide the CSS, but
-   * a page with both components would only include the CSS once, because they both called it
-   * 'jquery-ui'.
-   *
-   * A version string (e.g. '1.2.5') may be provided for each block. The block with the highest
-   * version number of any given name will be used. Other versions of that name will be ignored.
-   */
-  static cssBlocks () {
-    return new Map<string, { css: string, version?: string }>()
-  }
-
-  /**
-   * Same as cssBlocks() but for javascript.
-   */
-  static jsBlocks () {
-    return new Map<string, { js: string, version?: string }>()
   }
 
   /**
@@ -175,6 +159,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
 
 export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {
   pagePath: string
+  ancestors: PageRecord[]
 
   /**
    * we will fill this before rendering, stuff that dosgato knows needs to be added to
@@ -190,130 +175,6 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   constructor (page: PageWithAncestors<DataType>) {
     super(page.data, '/', undefined)
     this.pagePath = page.path
+    this.ancestors = page.ancestors
   }
-}
-
-// recursive helper function to traverse a hydrated page and return a flat array
-// of Component instances
-function collectComponents (component: Component) {
-  const ret = [component] as Component<ComponentData>[]
-  for (const areaList of component.areas.values()) {
-    for (const component of areaList) {
-      ret.push(...collectComponents(component))
-    }
-  }
-  return ret
-}
-
-// recursive helper function for the context phase of rendering (phase 2)
-function executeSetContext (editMode: boolean) {
-  const setContextFn = async (component: Component) => {
-    const components = Array.from(component.areas.values()).flat()
-    await Promise.all(components.map(async c => {
-      try {
-        if (!c.hadError) c.renderCtx = await c.setContext(component.renderCtx, editMode)
-      } catch (e: any) {
-        c.logError(e)
-      }
-      await setContextFn(c)
-    }))
-  }
-  return setContextFn
-}
-
-// recursive helper function for the final render phase of rendering (phase 3)
-function renderComponent (editMode: boolean) {
-  const renderFn = (component: Component) => {
-    if (component.hadError) return ''
-    const renderedAreas = new Map<string, string[]>()
-    for (const [key, list] of component.areas) {
-      const areaList = list.map(renderFn)
-      renderedAreas.set(key, areaList)
-    }
-    try {
-      return component.render(renderedAreas, editMode)
-    } catch (e: any) {
-      component.logError(e)
-      return ''
-    }
-  }
-  return renderFn
-}
-
-// recursive helper function for rendering a variation of a page
-function renderVariation (extension: string) {
-  const renderFn = (component: Component) => {
-    if (component.hadError) return ''
-    const renderedAreas = new Map<string, string>()
-    for (const [key, list] of component.areas) {
-      const areaList = list.map(renderFn)
-      renderedAreas.set(key, areaList.join(''))
-    }
-    try {
-      return component.renderVariation(extension, renderedAreas)
-    } catch (e: any) {
-      component.logError(e)
-      return ''
-    }
-  }
-  return renderFn
-}
-
-// helper function to convert a non-hydrated page into a hydrated page
-// in other words, the input to this function is a raw JSON object, as stored in the
-// database, and the output is a Page object, containing many Component objects, all
-// of which are ready with the properties and methods defined above to support the rendering
-// process
-function hydratePage (page: PageRecord) {
-  // find the page implementation in the registry
-  const PageType = templateRegistry.pages.get(page.data.templateKey)
-  if (!PageType) throw new Error('Unable to render page. Missing template implementation.')
-
-  // hydrate the page data into full objects
-  return new PageType(page)
-}
-
-/**
- * This function represents the entire rendering process. It takes a non-hydrated page (plus
- * the non-hydrated data for its ancestors, to support inheritance) and returns an HTML
- * string.
- *
- * Any migrations should be completed before rendering a page. They probably already happened
- * in the API Server.
- */
-export async function renderPage (requestHeaders: IncomingHttpHeaders, page: PageWithAncestors, extension: string, editMode = false) {
-  const pageComponent = hydratePage(page)
-  const componentsIncludingPage = collectComponents(pageComponent)
-
-  const cssComponents = Array.from(new Set(componentsIncludingPage.filter(c => (c.constructor as any).css).map(c => c.data.templateKey)))
-  const jsComponents = Array.from(new Set(componentsIncludingPage.filter(c => (c.constructor as any).javascript).map(c => c.data.templateKey)))
-
-  // execute the fetch phase
-  await Promise.all(componentsIncludingPage.map(async c => {
-    try {
-      c.fetched = await c.fetch(page, editMode)
-    } catch (e: any) {
-      c.logError(e)
-    }
-  }))
-
-  // if this is a variation, go ahead and render after the fetch phase
-  if (extension && extension !== 'html') return renderVariation(extension)(pageComponent)
-
-  // execute the context phase
-  pageComponent.renderCtx = await pageComponent.setContext({ headerLevel: 1, requestHeaders }, editMode)
-  await executeSetContext(editMode)(pageComponent)
-
-  // provide content for the <head> element and give it to the page component
-  pageComponent.headContent = (editMode ? editModeIncludes() : '') + [
-    ...Array.from(new Set(componentsIncludingPage.flatMap(r => r.jsBlocks()))).map(name => `<script src="/.resources/${templateRegistry.resourceversion}/${name}.js"></script>`),
-    ...Array.from(new Set(componentsIncludingPage.flatMap(r => r.cssBlocks()))).map(name => `<link rel="stylesheet" href="/.resources/${templateRegistry.resourceversion}/${name}.css">`)
-  ].join('\n')
-
-  // execute the render phase
-  return renderComponent(editMode)(pageComponent)
-}
-
-function editModeIncludes () {
-  return '' // TODO: include script and css to support implementation of edit bars
 }

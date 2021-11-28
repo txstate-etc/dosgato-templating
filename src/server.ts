@@ -1,10 +1,12 @@
 import { FastifyRequest } from 'fastify'
 import cookie from 'fastify-cookie'
 import Server, { FastifyTxStateOptions, HttpError } from 'fastify-txstate'
+import { createReadStream } from 'fs'
 import { api } from './api'
-import { Component, renderPage } from './component'
 import { templateRegistry } from './registry'
+import { renderPage } from './render'
 import { parsePath } from './util'
+import { schemaversion } from './version'
 
 function getToken (req: FastifyRequest<{ Querystring: { token?: string }}>) {
   const header = req.headers.authorization?.split(' ') ?? ['Bearer', '']
@@ -12,8 +14,8 @@ function getToken (req: FastifyRequest<{ Querystring: { token?: string }}>) {
   return req.query?.token ?? req.cookies.token ?? ''
 }
 
-class RenderingServer extends Server {
-  constructor (config: FastifyTxStateOptions) {
+export class RenderingServer extends Server {
+  constructor (config?: FastifyTxStateOptions) {
     super(config)
     void this.app.register(cookie)
 
@@ -26,7 +28,7 @@ class RenderingServer extends Server {
         const { path, extension } = parsePath(req.params['*'])
         const published = req.params.version === 'public' ? true : undefined
         const version = published ? undefined : (parseInt(req.params.version) || undefined)
-        const page = await api.getPreviewPage(getToken(req), req.params.pagetreeId, path, templateRegistry.schemaversion, published, version)
+        const page = await api.getPreviewPage(getToken(req), req.params.pagetreeId, path, schemaversion, published, version)
         if (!page) throw new HttpError(404)
         return await renderPage(req.headers, page, extension, false)
       }
@@ -39,7 +41,7 @@ class RenderingServer extends Server {
       '/.edit/:pagetreeId/*',
       async req => {
         const { path, extension } = parsePath(req.params['*'])
-        const page = await api.getPreviewPage(getToken(req), req.params.pagetreeId, path, templateRegistry.schemaversion)
+        const page = await api.getPreviewPage(getToken(req), req.params.pagetreeId, path, schemaversion)
         if (!page) throw new HttpError(404)
         return await renderPage(req.headers, page, extension, true)
       }
@@ -48,24 +50,34 @@ class RenderingServer extends Server {
     /**
      * Route for fetching CSS and JS from our registered templates, anonymous OK
      */
-    this.app.get<{ Params: { '*': string, version: string, blockName: string, ext: string } }>('/.resources/:version/:blockName.:ext', async (req, res) => {
-      const block = req.params.ext.includes('css')
-        ? templateRegistry.cssblocks.get(req.params.blockName)
-        : templateRegistry.jsblocks.get(req.params.blockName)
+    this.app.get<{ Params: { '*': string, version: string, file: string } }>('/.resources/:version/:file', async (req, res) => {
+      const [blockName, extension] = req.params.file.split('.', 2)
+      const block = extension.includes('css')
+        ? templateRegistry.cssblocks.get(blockName)
+        : (
+            extension.includes('js')
+              ? templateRegistry.jsblocks.get(blockName)
+              : templateRegistry.files.get(blockName)
+          )
       if (!block) throw new HttpError(404)
       await res.header('Cache-Control', 'max-age=31536000, immutable')
-      if ('css' in block && req.params.ext === 'css') {
+      if ('css' in block && extension === 'css') {
         await res.type('text/css')
-        if ((block.map?.length ?? 0) > 0) await res.header('SourceMap', `/.resources/${req.params.version}/${req.params.blockName}.css.map`)
+        if ((block.map?.length ?? 0) > 0) await res.header('SourceMap', `/.resources/${req.params.version}/${blockName}.css.map`)
         return block.css
-      } else if ('js' in block && req.params.ext === 'js') {
+      } else if ('js' in block && extension === 'js') {
         await res.type('text/javascript')
-        if ((block.map?.length ?? 0) > 0) await res.header('SourceMap', `/.resources/${req.params.version}/${req.params.blockName}.js.map`)
+        if ((block.map?.length ?? 0) > 0) await res.header('SourceMap', `/.resources/${req.params.version}/${blockName}.js.map`)
         return block.js
-      } else if (req.params.ext === 'css.map') {
+      } else if (extension === 'css.map' && 'map' in block) {
         return block.map ?? ''
-      } else if (req.params.ext === 'js.map') {
+      } else if (extension === 'js.map' && 'map' in block) {
         return block.map ?? ''
+      } else if (block.path && 'mime' in block) {
+        const instream = createReadStream(block.path)
+        await res.header('Content-Length', block.length)
+        await res.header('Content-Type', block.mime)
+        return await res.send(instream)
       }
       throw new HttpError(404)
     })
@@ -76,7 +88,7 @@ class RenderingServer extends Server {
     this.app.get<{ Params: { '*': string } }>('*', async req => {
       const { path, extension } = parsePath(req.params['*'])
 
-      const page = await api.getLaunchedPage(req.hostname, path, templateRegistry.schemaversion)
+      const page = await api.getLaunchedPage(req.hostname, path, schemaversion)
       if (!page) throw new HttpError(404)
       return await renderPage(req.headers, page, extension, false)
     })

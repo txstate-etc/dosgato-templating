@@ -1,9 +1,12 @@
 import { minify } from 'csso'
-import { readFileSync } from 'fs'
+import { readFileSync, statSync } from 'fs'
+import mime from 'mime-types'
 import semver from 'semver'
 import { minify as jsminify } from 'terser'
 import { PageRecord, Page, Component } from './component'
+import { ResourceProvider } from './provider'
 import { ComponentData } from './sharedtypes'
+import { resourceversion } from './version'
 
 function versionGreater (v2: string|undefined, v1: string|undefined) {
   if (v2 == null) return false
@@ -19,56 +22,63 @@ function versionGreater (v2: string|undefined, v1: string|undefined) {
  * over their installations and opt-in to whatever templates they want to have/support.
  */
 class TemplateRegistry {
-  public pages = new Map<string, new (page: PageRecord) => Page>()
-  public components = new Map<string, new (component: ComponentData, path: string, parent: Component) => Component>()
-  public cssblocks = new Map<string, { css: string, version?: string, map?: string }>()
-  public jsblocks = new Map<string, { js: string, version?: string, map?: string }>()
+  public pages: Map<string, new (page: PageRecord) => Page> = new Map()
+  public components: Map<string, new (component: ComponentData, path: string, parent: Component) => Component> = new Map()
+  public cssblocks: Map<string, { css?: string, path?: string, version?: string, map?: string }> = new Map()
+  public jsblocks: Map<string, { js?: string, path?: string, version?: string, map?: string }> = new Map()
+  public files: Map<string, { path: string, version?: string, extension?: string, mime: string, length: number }> = new Map()
   public all = [] as (typeof Component)[]
 
-  /**
-   * We will want to cache the migration process based on the page version and schema version
-   * identifiers. So we want to stabilize the schema version rather than just saying "give me
-   * the page at today's date". This function can help with that stabilization by finding the
-   * last migration date in the current system so that API clients can detect and reuse it.
-   *
-   * It could also be done by hand and saved hard-coded in a client so that it has a predictable
-   * view of the data, but an automated method will probably be more convenient.
-   */
-  public schemaversion: Date
-  public resourceversion: string
-
   addTemplate<T extends typeof Component> (template: T) {
-    if (template instanceof Page) this.pages.set(template.templateKey, template as any)
-    else this.components.set(template.templateKey, template as any)
+    if (template instanceof Page && !this.pages.has(template.templateKey)) this.pages.set(template.templateKey, template as any)
+    else if (!this.components.has(template.templateKey)) this.components.set(template.templateKey, template as any)
     this.all.push(template)
-    for (const [key, block] of template.jsBlocks().entries()) {
+    this.addProvider(template as any)
+  }
+
+  addProvider<T extends typeof ResourceProvider> (template: T) {
+    for (const [key, block] of template.jsBlocks.entries()) {
       const existing = this.jsblocks.get(key)
       if (!existing || versionGreater(block.version, existing.version)) this.jsblocks.set(key, block)
     }
-    for (const [key, block] of template.cssBlocks().entries()) {
+    for (const [key, block] of template.cssBlocks.entries()) {
       const existing = this.cssblocks.get(key)
       if (!existing || versionGreater(block.version, existing.version)) this.cssblocks.set(key, block)
     }
+    for (const [key, block] of template.files.entries()) {
+      const existing = this.files.get(key)
+      if (!existing || versionGreater(block.version, existing.version)) {
+        const stat = statSync(block.path)
+        const ext = mime.extension(block.mime)
+        this.files.set(key, { ...block, length: stat.size, extension: ext || undefined })
+
+        // write back to the component's `webpaths` property so it will know where its files
+        // live on the rendering server
+        const webpath = `/.resources/${resourceversion}/${key}${ext ? '.' + ext : ''}`
+        template.webpaths.set(key, webpath)
+      }
+    }
     for (const block of this.cssblocks.values()) {
-      const minified = minify(block.css, { sourceMap: true })
+      const css = block.css ?? readFileSync(block.path!, 'utf8')
+      const minified = minify(css, { sourceMap: true })
       block.css = minified.css
-      block.map = minified.map!.toString()
+      block.map = JSON.stringify(minified.map)
     }
     for (const block of this.jsblocks.values()) {
-      jsminify(block.js, { sourceMap: true }).then(minified => {
+      const js = block.js ?? readFileSync(block.path!, 'utf8')
+      jsminify(js, { sourceMap: true }).then(minified => {
         block.js = minified.code ?? ''
         block.map = minified.map as string ?? ''
       }).catch(e => console.error(e))
     }
+    // now that we've registered and minified the JS and CSS, we can allow the original
+    // unminified code to get garbage collected
+    template.jsBlocks.clear()
+    template.cssBlocks.clear()
   }
 
   getTemplate (templateKey: string) {
     return this.pages.get(templateKey) ?? this.components.get(templateKey)
-  }
-
-  constructor () {
-    this.schemaversion = new Date(readFileSync('/.builddate').toString('ascii').trim())
-    this.resourceversion = String(Math.round(this.schemaversion.getTime()))
   }
 }
 

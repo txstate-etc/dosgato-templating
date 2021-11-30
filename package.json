@@ -1,6 +1,6 @@
 {
   "name": "@dosgato/templating",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A library to support building templates for dosgato CMS.",
   "exports": {
     "require": "./dist/index.js",
@@ -30,5 +30,8 @@
   "bugs": {
     "url": "https://github.com/txstate-etc/dosgato-templating/issues"
   },
-  "homepage": "https://github.com/txstate-etc/dosgato-templating#readme"
+  "homepage": "https://github.com/txstate-etc/dosgato-templating#readme",
+  "files": [
+    "dist", "dist-esm"
+  ]
 }

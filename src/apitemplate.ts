@@ -1,13 +1,13 @@
 import { PageWithAncestors, ComponentData } from './component'
 import { LinkDefinition } from './links'
 
-export type TemplateType = 'page'|'component'|'data'
+export type APITemplateType = 'page'|'component'|'data'
 
 /**
  * This interface lays out the structure the API needs for each template in the system.
  */
-export interface Template {
-  type: TemplateType
+export interface APITemplate {
+  type: APITemplateType
 
   /**
    * A unique string to globally identify this template across installations. Namespacing like

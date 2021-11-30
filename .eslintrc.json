@@ -4,12 +4,12 @@
       "project": "./tsconfig.eslint.json"
   },
   "rules": {
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/array-type": "off",
-    "@typescript-eslint/no-non-null-assertion": "off",
-    "@typescript-eslint/no-unused-vars": "off", // typescript does this better
-    "@typescript-eslint/require-await": "off",
-    "@typescript-eslint/return-await": ["error", "always"],
-    "@typescript-eslint/strict-boolean-expressions": "off"
+    "@typescript-eslint/explicit-function-return-type": "off", // useless boilerplate
+    "@typescript-eslint/array-type": "off", // forces you to use Array<CustomType> instead of CustomType[], silly
+    "@typescript-eslint/no-non-null-assertion": "off", // disables using ! to mark something as non-null,
+                                                       // generally not avoidable without wasting cpu cycles on a check
+    "@typescript-eslint/no-unused-vars": "off", // typescript already reports this and VSCode darkens the variable
+    "@typescript-eslint/return-await": ["error", "always"], // allows you to accidentally break async stacktraces in node 14+
+    "@typescript-eslint/strict-boolean-expressions": "off" // we know how truthiness works, annoying to have to avoid
   }
 }

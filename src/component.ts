@@ -1,29 +1,5 @@
+import { Page } from './page'
 import { ResourceProvider } from './provider'
-import { PageData, ComponentData } from './sharedtypes'
-
-export interface PageRecord<DataType extends PageData = PageData> {
-  id: string
-  linkId: string
-  path: string
-  data: DataType
-}
-
-export interface PageWithAncestors<DataType extends PageData = PageData> extends PageRecord<DataType> {
-  ancestors: PageRecord<PageData>[]
-}
-
-export interface ContextBase {
-  /**
-   * For accessibility, every component should consider whether it is creating headers
-   * using h1-h6 tags, and set the context for its children so that they will use the
-   * next higher number. For example, a page component might use h1 for the page title,
-   * in which case it should set headerLevel: 2 so that its child components will use
-   * h2 next. Those components in turn can increment headerLevel for their children.
-   *
-   * This way every page will have a perfect header tree and avoid complaints from WAVE.
-   */
-  headerLevel: number
-}
 
 /**
  * This is the primary templating class to build your templates. Subclass it and provide
@@ -137,7 +113,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   }
 
   /**
-   * During rendering, each component should register the CSS blocks that it needs. This may
+   * During rendering, each component should determine the CSS blocks that it needs. This may
    * change depending on the data. For instance, if you need some CSS to style up an image, but
    * only when the editor uploaded an image, you can check whether the image is present during
    * the execution of this function.
@@ -157,24 +133,35 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   }
 }
 
-export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {
-  pagePath: string
-  ancestors: PageRecord[]
+export interface PageRecord<DataType extends PageData = PageData> {
+  id: string
+  linkId: string
+  path: string
+  data: DataType
+}
 
+export interface PageWithAncestors<DataType extends PageData = PageData> extends PageRecord<DataType> {
+  ancestors: PageRecord<PageData>[]
+}
+
+export interface ComponentData {
+  templateKey: string
+  areas: Record<string, ComponentData[]>
+}
+
+export interface PageData extends ComponentData {
+  savedAtVersion: Date
+}
+
+export interface ContextBase {
   /**
-   * we will fill this before rendering, stuff that dosgato knows needs to be added to
-   * the <head> element
-   * the page's render function must include it
+   * For accessibility, every component should consider whether it is creating headers
+   * using h1-h6 tags, and set the context for its children so that they will use the
+   * next higher number. For example, a page component might use h1 for the page title,
+   * in which case it should set headerLevel: 2 so that its child components will use
+   * h2 next. Those components in turn can increment headerLevel for their children.
+   *
+   * This way every page will have a perfect header tree and avoid complaints from WAVE.
    */
-  headContent!: string
-
-  protected passError (e: Error, path: string) {
-    console.warn(`Recoverable issue occured during render of ${this.pagePath}. Component at ${path} threw the following error:`, e)
-  }
-
-  constructor (page: PageWithAncestors<DataType>) {
-    super(page.data, '/', undefined)
-    this.pagePath = page.path
-    this.ancestors = page.ancestors
-  }
+  headerLevel: number
 }

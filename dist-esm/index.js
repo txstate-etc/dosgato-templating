@@ -1,3 +1,5 @@
-import all from '../lib/index.js'
+import all from '../dist/index.js'
 
-export const Template = all.Template
+export const ResourceProvider = all.ResourceProvider
+export const Component = all.Component
+export const Page = all.Page

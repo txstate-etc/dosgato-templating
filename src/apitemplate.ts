@@ -56,6 +56,17 @@ export interface APITemplate {
    * names.
    */
   validate: (data: any) => Promise<Record<string, string[]>>
+
+  /**
+   * Hard-coded properties that may be set on page templates to influence the rendering of
+   * components on the page. For instance, a set of color choices that are customized for
+   * each template design. Components on the page may refer to the color information stored
+   * in the template during dialogs and while rendering. Changing to a different page template
+   * could then result in different color choices for components like buttons.
+   *
+   * Must be null for non-page templates.
+   */
+  templateProperties?: any
 }
 
 /**

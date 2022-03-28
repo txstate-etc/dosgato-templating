@@ -16,6 +16,11 @@ export interface APITemplate {
   templateKey: string
 
   /**
+   * A uniquey human-readable name describing this template
+   */
+  name: string
+
+  /**
    * Each template must declare its areas and the template keys of components that will be
    * permitted inside each area. The list of allowed component templates can be updated beyond
    * the list provided here. See templateRegistry.addAvailableComponent's comment for info on why.

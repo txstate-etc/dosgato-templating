@@ -19,6 +19,7 @@ export interface AssetLink {
  */
 export interface AssetFolderLink {
   type: 'assetfolder'
+  source: string
   id: string // the asset folder's guid
   siteId: string
   path: string

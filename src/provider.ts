@@ -1,5 +1,25 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 
+export interface CSSBlock {
+  css?: string
+  path?: string
+  version?: string
+  async?: boolean
+}
+
+export interface JSBlock {
+  js?: string
+  path?: string
+  version?: string
+  async?: boolean
+}
+
+export interface FileDeclaration {
+  path: string
+  version?: string
+  mime: string
+}
+
 /**
  * This class is a parent class for Component, but it can also be used as a standalone
  * if you are creating a set of templates with shared resources. This will be fairly
@@ -22,15 +42,24 @@ export abstract class ResourceProvider {
    * version number of any given name will be used. Other versions of that name will be ignored.
    *
    * For convenience you can either provide the `css` property with the CSS as a string, or the
-   * `path` property with the full server path to a CSS file (node's __dirname function will
+   * `path` property with the full server path (NOT URL) to a CSS file (node's __dirname function will
    * help you determine it). You MUST provide one or the other.
+   *
+   * You may also set `async` to true if a css block is not needed for the initial render of
+   * the page. For instance, if your component has a modal that the user can trigger, you can
+   * defer the CSS for that modal since it will not be needed until the page has gone interactive
+   * and the user has clicked something.
    */
-  static cssBlocks: Map<string, { css?: string, path?: string, version?: string }> = new Map()
+  static cssBlocks: Map<string, CSSBlock> = new Map()
 
   /**
    * Same as cssBlocks() but for javascript.
+   *
+   * In this case `async` is much more useful, as most javascript is interactive and could run
+   * after the page renders. Any code that adds event observers or the like should be marked with
+   * async to improve the initial render time.
    */
-  static jsBlocks: Map<string, { js?: string, path?: string, version?: string }> = new Map()
+  static jsBlocks: Map<string, JSBlock> = new Map()
 
   /**
    * If your template needs to serve any files, like fonts or images, you can provide
@@ -54,7 +83,7 @@ export abstract class ResourceProvider {
    * DO NOT change the mime type without changing the name. Other templates could end up with
    * the wrong file extension.
    */
-  static files: Map<string, { path: string, version?: string, mime: string }> = new Map()
+  static files: Map<string, FileDeclaration> = new Map()
 
   /**
    * Template code will need to generate HTML and CSS that points at the static files

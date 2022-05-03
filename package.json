@@ -1,6 +1,6 @@
 {
   "name": "@dosgato/templating",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A library to support building templates for dosgato CMS.",
   "exports": {
     "require": "./dist/index.js",
@@ -11,7 +11,10 @@
     "prepublishOnly": "npm run build",
     "build": "rm -rf dist && tsc"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@iconify/svelte": "^2.2.1",
+    "svelte": "^3.48.0"
+  },
   "devDependencies": {
     "eslint-config-standard-with-typescript": "^21.0.1",
     "typescript": "^4.4.2"

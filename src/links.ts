@@ -7,9 +7,8 @@ export interface AssetLink {
   type: 'asset'
   source: string
   id: string // the asset's dataId
-  siteId: string
-  path: string
-  checksum: string
+  path?: string
+  checksum?: string
 }
 
 /**
@@ -21,7 +20,6 @@ export interface AssetFolderLink {
   type: 'assetfolder'
   source: string
   id: string // the asset folder's guid
-  siteId: string
   path: string
 }
 
@@ -31,7 +29,6 @@ export interface AssetFolderLink {
 export interface PageLink {
   type: 'page'
   linkId: string
-  siteId: string
   path: string
 }
 
@@ -54,8 +51,9 @@ export interface WebLink {
  */
 export interface DataLink {
   type: 'data'
+  templateKey: string
   id: string // the data item's dataId
-  siteId: string|null // null if global data
+  siteId?: string // null if global data
   path: string
 }
 

@@ -146,7 +146,7 @@ export interface PageWithAncestors<DataType extends PageData = PageData> extends
 
 export interface ComponentData {
   templateKey: string
-  areas: Record<string, ComponentData[]>
+  areas?: Record<string, ComponentData[]>
 }
 
 export interface PageData extends ComponentData {

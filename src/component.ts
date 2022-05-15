@@ -121,14 +121,14 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * need any async data to make this determination, be sure to fetch it during the fetch phase.
    */
   cssBlocks (): string[] {
-    return (this.constructor as any).cssBlocks.keys()
+    return Array.from((this.constructor as any).cssBlocks.keys())
   }
 
   /**
    * Same as cssBlocks() but for javascript.
    */
   jsBlocks (): string[] {
-    return (this.constructor as any).jsBlocks.keys()
+    return Array.from((this.constructor as any).jsBlocks.keys())
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@dosgato/templating",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "A library to support building templates for dosgato CMS.",
   "exports": {
     "require": "./dist/index.js",

@@ -103,7 +103,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   logError (e: Error) {
     this.hadError = true
-    this.parent?.passError(e, this.path)
+    this.passError(e, this.path)
   }
 
   // helper function for recursively passing the error up until it reaches the page

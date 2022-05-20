@@ -1,3 +1,4 @@
+import { editBar, EditBarOpts, newBar } from './editbar'
 import { ResourceProvider } from './provider'
 
 /**
@@ -129,6 +130,66 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   jsBlocks (): string[] {
     return Array.from((this.constructor as any).jsBlocks.keys())
+  }
+
+  /**
+   * Components may override this function to give their edit bars a custom
+   * label instead of using the templateName property
+   *
+   * For instance, you could return this.data.title
+   */
+  editLabel () {
+    const This = this.constructor as typeof Component
+    return This.templateName
+  }
+
+  /**
+   * Components may override this function to give their edit bars a custom
+   * CSS class
+   */
+  editClass () {
+    return undefined
+  }
+
+  /**
+   * Components may override this function to give their new bars a custom
+   * label
+   *
+   * For instance, an area that only accepts 'layout' components could
+   * return "Add Layout"
+   */
+  newLabel (areaName: string) {
+    return 'Add Content'
+  }
+
+  /**
+   * Components may override this function to give their new bars a custom
+   * CSS class
+   */
+  newClass (areaName: string) {
+    return undefined
+  }
+
+  /**
+   * Components may override this function to provide a custom edit bar
+   *
+   * Generally should not be overridden - override editLabel and editClass instead
+   */
+  editBar (opts: EditBarOpts = {}) {
+    opts.label ??= this.editLabel()
+    opts.extraClass ??= this.editClass()
+    return editBar(this.path, opts as EditBarOpts & { label: string })
+  }
+
+  /**
+   * Components may override this function to provide a custom new bar
+   *
+   * Generally should not be overridden - override newLabel and newClass instead
+   */
+  newBar (areaName: string, opts: EditBarOpts = {}) {
+    opts.label ??= this.newLabel(areaName)
+    opts.extraClass ??= this.newClass(areaName)
+    return newBar(this.path + '.' + areaName, opts as EditBarOpts & { label: string })
   }
 }
 

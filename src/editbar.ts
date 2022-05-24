@@ -3,9 +3,11 @@ import { htmlEncode, randomid } from 'txstate-utils'
 export interface EditBarOpts {
   extraClass?: string
   label?: string
+  editMode?: boolean
 }
 
 export function editBar (path: string, opts: EditBarOpts & { label: string }) {
+  if (!opts.editMode) return ''
   const id = randomid()
   return `
 <div class="dg-edit-bar ${opts.extraClass ?? ''}" data-path="${htmlEncode(path)}">
@@ -18,6 +20,7 @@ export function editBar (path: string, opts: EditBarOpts & { label: string }) {
 }
 
 export function newBar (path: string, opts: EditBarOpts & { label: string }) {
+  if (!opts.editMode) return ''
   return `
 <div class="dg-new-bar ${opts.extraClass ?? ''}" data-path="${htmlEncode(path)}">
   <button>${htmlEncode(opts.label)}</button>

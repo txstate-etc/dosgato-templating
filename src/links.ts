@@ -1,3 +1,5 @@
+import { stopwords } from './stopwords'
+
 /**
  * This is what an AssetLink should look like when stored in component data. It includes
  * lots of information so if the asset gets moved or recreated it may be possible to find
@@ -69,3 +71,26 @@ export interface DataFolderLink {
 }
 
 export type LinkDefinition = AssetLink | AssetFolderLink | PageLink | WebLink | DataLink | DataFolderLink
+
+/**
+ * This function is used by API template definitions to help them identify links inside large blocks
+ * of text and return them for indexing.
+ */
+export function extractLinksFromText (text: string) {
+  const matches = text.matchAll(/{.*"type"\s?:\s+"\w+".*?}/gi)
+  return Array.from(matches).map(m => JSON.parse(m[0])) as LinkDefinition[]
+}
+
+/**
+ * This function is used by API template definitions to help them identify all the searchable
+ * words in a large block of text and return them for indexing.
+ */
+export function getKeywords (text: string, options?: { stopwords?: boolean }) {
+  return Array.from(new Set(text
+    .toLocaleLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .split(/[^\w-]+/)
+    .flatMap(word => word.includes('-') ? word.split('-').concat(word.replace('-', '')) : [word])
+    .filter(word => word.length > 2 && (options?.stopwords === false || !stopwords[word]) && isNaN(Number(word)))
+  ))
+}

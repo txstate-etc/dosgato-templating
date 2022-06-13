@@ -1,4 +1,5 @@
 import { editBar, EditBarOpts, newBar } from './editbar'
+import { LinkDefinition } from './links'
 import { ResourceProvider } from './provider'
 
 /**
@@ -25,6 +26,20 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   hadError: boolean
 
   /**
+   * This function will be provided by the rendering server and should be used inside your fetch,
+   * method to convert a link, as input by a user, into a URL suitable for an href, or optionally
+   * an absolute URL suitable for a backend http request or non-HTML document like an RSS feed.
+   */
+  resolveLink!: (link: string|LinkDefinition, absolute?: boolean) => Promise<string>
+  /**
+   * This function will be provided by the rendering server and should be used inside your fetch
+   * method to prepare editor-provided HTML for rendering. It will do things like find and resolve
+   * link definitions in the internal dosgato format and clean up tags that were accidentally left
+   * open to protect overall page integrity.
+   */
+  processRich!: (text: string) => Promise<string>
+
+  /**
    * The first phase of rendering a component is the fetch phase. Each component may
    * provide a fetch method that looks up data it needs from external sources. This step
    * is FLAT - it will be executed concurrently for all the components on the page for
@@ -40,14 +55,14 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   }
 
   /**
-   * The second phase of rendering a component is the context phase. This step is TOP-DOWN,
-   * each component will receive the parent component's context, modify it as desired,
-   * and then pass context to its children.
+   * The second phase of rendering a component is the context phase. This step is TOP-DOWN and
+   * NON-MUTATING. Each component will receive the parent component's context and then pass a
+   * NEW context object to its children.
    *
    * This is useful for rendering logic that is sensitive to where the component exists in
    * the hierarchy of the page. For instance, if a parent component has used an h2 header
    * already, it will want to inform its children so that they can use h3 next, and they inform
-   * their children that h4 is next, and so on. (Header level tracking is actually required in
+   * their children that h4 is next, and so on. (Header level tracking is supported by default in
    * dosgato CMS.)
    *
    * This function may return a promise in case you need to do something asynchronous based on

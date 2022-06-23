@@ -1,4 +1,4 @@
-import { PageWithAncestors, ComponentData } from './component.js'
+import { PageRecord, ComponentData } from './component.js'
 import { LinkDefinition } from './links.js'
 import { stopwords } from './stopwords.js'
 
@@ -97,8 +97,8 @@ export interface APITemplate {
  */
 export interface Migration {
   createdAt: Date
-  up: (data: ComponentData, page: PageWithAncestors) => ComponentData|Promise<ComponentData>
-  down: (data: ComponentData, page: PageWithAncestors) => ComponentData|Promise<ComponentData>
+  up: (data: ComponentData, page: PageRecord) => ComponentData|Promise<ComponentData>
+  down: (data: ComponentData, page: PageRecord) => ComponentData|Promise<ComponentData>
 }
 
 export type LinkGatheringFn = (data: any) => LinkDefinition[]

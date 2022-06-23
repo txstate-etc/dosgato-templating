@@ -1,6 +1,6 @@
-import { editBar, EditBarOpts, newBar } from './editbar'
-import { LinkDefinition } from './links'
-import { ResourceProvider } from './provider'
+import { editBar, EditBarOpts, newBar } from './editbar.js'
+import { ResourceProvider } from './provider.js'
+import { APIClient } from './render.js'
 
 /**
  * This is the primary templating class to build your templates. Subclass it and provide
@@ -26,18 +26,37 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   hadError: boolean
 
   /**
-   * This function will be provided by the rendering server and should be used inside your fetch,
-   * method to convert a link, as input by a user, into a URL suitable for an href, or optionally
-   * an absolute URL suitable for a backend http request or non-HTML document like an RSS feed.
+   * The rendering server will provide an instance of the APIClient interface so that
+   * you can run any API GraphQL query you like in your `fetch` function. There are also
+   * some useful methods there like processRich to help you convert links in rich text
+   * strings.
+   *
+   * Do NOT mutate data received from the API as it may be cached and given to other
+   * Component instances that run the same type of query.
    */
-  resolveLink!: (link: string|LinkDefinition, absolute?: boolean) => Promise<string>
+  api!: APIClient
+
   /**
-   * This function will be provided by the rendering server and should be used inside your fetch
-   * method to prepare editor-provided HTML for rendering. It will do things like find and resolve
-   * link definitions in the internal dosgato format and clean up tags that were accidentally left
-   * open to protect overall page integrity.
+   * Retrieve the data for the root page of the page this component is on. Useful for
+   * implementing inheritance schemes.
+   *
+   * This function will be provided by the rendering service.
+   *
+   * Do NOT mutate the data returned by this function, as it may be cached and given to
+   * other Component instances.
    */
-  processRich!: (text: string) => Promise<string>
+  getRootPageData!: () => Promise<PageData>
+
+  /**
+   * Retrieve the data for all ancestor pages of the page this component is on. Useful
+   * for implementing inheritance schemes.
+   *
+   * This function will be provided by the rendering service.
+   *
+   * Do NOT mutate the data returned by this function, as it may be cached and given to
+   * other Component instances.
+   */
+  getAncestorPageData!: () => Promise<PageData[]>
 
   /**
    * The first phase of rendering a component is the fetch phase. Each component may
@@ -45,10 +64,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * is FLAT - it will be executed concurrently for all the components on the page for
    * maximum speed.
    *
-   * Note that this.page will be available, along with its ancestors property containing
-   * all the data from ancestor pages, in case there is a need for inheritance. It is
-   * recommended to copy any needed data into the return object, as future phases will not
-   * want to resolve the inheritance again.
+   * Place any needed data into the return object, and it will be available to you as `this.fetched`
+   * during the rendering phase.
+   *
+   * Note that this.page will be available, and getRootPageData and getAncestorPageData are
+   * available in case there is a need for inheritance. If you need to inherit entire components,
+   * you may add them to your this.areas map, e.g.
+   * `this.areas.get('myarea').push(new Component(inheritedData, this.path + '/myarea/inherit1', this))`
    */
   async fetch (editMode: boolean) {
     return undefined as unknown as FetchedType
@@ -225,6 +247,11 @@ export interface ComponentData {
 }
 
 export interface PageData extends ComponentData {
+  savedAtVersion: Date
+}
+
+export interface DataData {
+  templateKey: string
   savedAtVersion: Date
 }
 

@@ -1,6 +1,6 @@
-import { PageWithAncestors, ComponentData } from './component'
-import { LinkDefinition } from './links'
-import { stopwords } from './stopwords'
+import { PageWithAncestors, ComponentData } from './component.js'
+import { LinkDefinition } from './links.js'
+import { stopwords } from './stopwords.js'
 
 export type APITemplateType = 'page'|'component'|'data'
 

@@ -1,8 +1,20 @@
-import { PageRecord, ComponentData } from './component.js'
+import { PageRecord, ComponentData, PageData } from './component.js'
 import { LinkDefinition } from './links.js'
 import { stopwords } from './stopwords.js'
 
 export type APITemplateType = 'page'|'component'|'data'
+
+enum MessageType {
+  ERROR = 'error',
+  WARNING = 'warning',
+  SUCCESS = 'success'
+}
+
+interface Feedback {
+  type: `${MessageType}`
+  path?: string
+  message: string
+}
 
 /**
  * This interface lays out the structure the API needs for each template in the system.
@@ -51,17 +63,22 @@ export interface APITemplate {
 
   /**
    * Each template must provide a validation function so that the API can enforce its data is
-   * shaped properly. If there are no issues, it should return an empty object {}, otherwise it
-   * should return an object with keys that reference the path to the error and values that
-   * are an array of error messages pertaining to that path.
+   * shaped properly.
    *
-   * For instance, if name is required and the user didn't provide one, you would return:
-   * { name: ['A name is required.'] }
+   * Each entry in the return array can have a type of error, warning, or success. Errors
+   * represent a validation failure and mean that saving will not succeed. Warnings are shown
+   * to the editor but do not prevent saving. Success messages postively affirm valid input - for
+   * instance, a name they chose is available.
+   *
+   * As an example, if name is required and the user didn't provide one, you would return:
+   * [{ type: 'error', path: 'name', message: 'A name is required.' }]
    *
    * This method is async so that you can do things like look in the database for conflicting
-   * names.
+   * names. The full page data, the path to this component, and a GraphQL query executor are
+   * available as parameters in case you need them. Keep in mind that the current editor MUST
+   * have access to any data you attempt to query in GraphQL.
    */
-  validate: (data: any) => Promise<Record<string, string[]>>
+  validate: (data: ComponentData, query: <T> (query: string, variables?: any) => Promise<T>, page: PageData, path: string) => Promise<Feedback[]>
 
   /**
    * Hard-coded properties that may be set on page templates to influence the rendering of

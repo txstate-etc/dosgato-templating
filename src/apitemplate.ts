@@ -11,7 +11,7 @@ export enum ValidationMessageType {
 }
 
 export interface ValidationFeedback {
-  type: `${ValidationMessageType}`
+  type?: `${ValidationMessageType}`
   path?: string
   message: string
 }

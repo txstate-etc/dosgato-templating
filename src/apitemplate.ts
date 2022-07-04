@@ -78,7 +78,7 @@ export interface APITemplate {
    * available as parameters in case you need them. Keep in mind that the current editor MUST
    * have access to any data you attempt to query in GraphQL.
    */
-  validate: (data: ComponentData, query: <T> (query: string, variables?: any) => Promise<T>, page: PageData, path: string) => Promise<ValidationFeedback[]>
+  validate?: (data: ComponentData, query: <T> (query: string, variables?: any) => Promise<T>, page: PageData, path: string) => Promise<ValidationFeedback[]>
 
   /**
    * Hard-coded properties that may be set on page templates to influence the rendering of

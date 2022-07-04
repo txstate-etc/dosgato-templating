@@ -78,7 +78,7 @@ export interface APITemplate {
    * available as parameters in case you need them. Keep in mind that the current editor MUST
    * have access to any data you attempt to query in GraphQL.
    */
-  validate?: (data: ComponentData, query: <T> (query: string, variables?: any) => Promise<T>, page: PageRecord, path: string) => Promise<ValidationFeedback[]>
+  validate?: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => Promise<ValidationFeedback[]>
 
   /**
    * Hard-coded properties that may be set on page templates to influence the rendering of
@@ -111,15 +111,24 @@ export interface APITemplate {
  *
  * Your `up` and `down` methods will be applied to components in bottom-up fashion, so you
  * can assume that any components inside one of your areas has already been processed.
+ *
+ * All migration functions receive a `query` function for making a graphql query, in case the
+ * migration depends on the state of a parent page or something. Be careful not
+ * to create an infinite loop - querying a page will trigger that page to be migrated, which
+ * could end up calling your code again on that page.
+ *
+ * If you're migrating a component template, you'll also get the page record and the
+ * path inside that page's data to the component being migrated.
  */
 export interface Migration {
   createdAt: Date
-  up: (data: ComponentData, page: PageRecord) => ComponentData|Promise<ComponentData>
-  down: (data: ComponentData, page: PageRecord) => ComponentData|Promise<ComponentData>
+  up: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => ComponentData|Promise<ComponentData>
+  down: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => ComponentData|Promise<ComponentData>
 }
 
 export type LinkGatheringFn = (data: any) => LinkDefinition[]
 export type FulltextGatheringFn = (data: any) => string[]
+export type GraphQLQueryFn = <T> (query: string, variables?: any) => Promise<T>
 
 /**
  * This function is used by API template definitions to help them identify links inside large blocks

@@ -166,8 +166,8 @@ export interface PageMigration extends Migration {
   down: (data: PageData, query: GraphQLQueryFn, page: PageRecord) => PageData|Promise<PageData>
 }
 export interface DataMigration extends Migration {
-  up: (data: DataData, query: GraphQLQueryFn, dataId: string) => DataData|Promise<DataData>
-  down: (data: DataData, query: GraphQLQueryFn, dataId: string) => DataData|Promise<DataData>
+  up: (data: DataData, query: GraphQLQueryFn, dataRootId: string, dataFolderId?: string, dataId?: string) => DataData|Promise<DataData>
+  down: (data: DataData, query: GraphQLQueryFn, dataRootId: string, dataFolderId?: string, dataId?: string) => DataData|Promise<DataData>
 }
 export type AnyMigration = ComponentMigration|PageMigration|DataMigration
 

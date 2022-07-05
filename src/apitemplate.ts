@@ -1,4 +1,4 @@
-import { PageRecord, ComponentData } from './component.js'
+import { PageRecord, ComponentData, DataData, PageData } from './component.js'
 import { LinkDefinition } from './links.js'
 import { stopwords } from './stopwords.js'
 
@@ -34,20 +34,6 @@ export interface APITemplate {
   name: string
 
   /**
-   * Each template must declare its areas and the template keys of components that will be
-   * permitted inside each area. The list of allowed component templates can be updated beyond
-   * the list provided here. See templateRegistry.addAvailableComponent's comment for info on why.
-   */
-  areas: Record<string, string[]>
-
-  /**
-   * Each template must provide a list of migrations for upgrading the data schema over time.
-   * Typically this will start as an empty array and migrations will be added as the template
-   * gets refactored.
-   */
-  migrations: Migration[]
-
-  /**
    * Each template must provide a function that returns links from its data so that they
    * can be indexed. Only fields that are links need to be returned. Links inside rich editor
    * text will be extracted automatically from any text returned by getFulltext (see below)
@@ -60,6 +46,17 @@ export interface APITemplate {
    * by this function will also be scanned for links.
    */
   getFulltext: FulltextGatheringFn
+}
+
+export interface APIComponentTemplate extends APITemplate {
+  type: 'component'
+
+  /**
+   * Each template must declare its areas and the template keys of components that will be
+   * permitted inside each area. The list of allowed component templates can be updated beyond
+   * the list provided here. See templateRegistry.addAvailableComponent's comment for info on why.
+   */
+  areas?: Record<string, string[]>
 
   /**
    * Each template must provide a validation function so that the API can enforce its data is
@@ -81,6 +78,29 @@ export interface APITemplate {
   validate?: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => Promise<ValidationFeedback[]>
 
   /**
+   * Each template must provide a list of migrations for upgrading the data schema over time.
+   * Typically this will start as an empty array and migrations will be added as the template
+   * gets refactored.
+   */
+  migrations: ComponentMigration[]
+}
+
+export interface APIPageTemplate extends APITemplate {
+  type: 'page'
+
+  /**
+   * Page areas are the same as components but are required.
+   */
+  areas: Record<string, string[]>
+
+  /**
+   * Page template implementations do not receive a path like component templates do.
+   */
+  validate?: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord) => Promise<ValidationFeedback[]>
+
+  migrations: PageMigration[]
+
+  /**
    * Hard-coded properties that may be set on page templates to influence the rendering of
    * components on the page. For instance, a set of color choices that are customized for
    * each template design. Components on the page may refer to the color information stored
@@ -91,6 +111,18 @@ export interface APITemplate {
    */
   templateProperties?: any
 }
+
+export interface APIDataTemplate extends APITemplate {
+  type: 'data'
+  /**
+   * Data template implementations receive the dataId so they can self-reference in queries.
+   */
+  validate?: (data: ComponentData, query: GraphQLQueryFn, dataId: string) => Promise<ValidationFeedback[]>
+
+  migrations: DataMigration[]
+}
+
+export type APIAnyTemplate = APIComponentTemplate|APIPageTemplate|APIDataTemplate
 
 /**
  * In dosgato CMS, the data in the database is not altered except during user activity. This
@@ -122,9 +154,20 @@ export interface APITemplate {
  */
 export interface Migration {
   createdAt: Date
+}
+export interface ComponentMigration extends Migration {
   up: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => ComponentData|Promise<ComponentData>
   down: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => ComponentData|Promise<ComponentData>
 }
+export interface PageMigration extends Migration {
+  up: (data: PageData, query: GraphQLQueryFn, page: PageRecord) => PageData|Promise<PageData>
+  down: (data: PageData, query: GraphQLQueryFn, page: PageRecord) => PageData|Promise<PageData>
+}
+export interface DataMigration extends Migration {
+  up: (data: DataData, query: GraphQLQueryFn, dataId: string) => DataData|Promise<DataData>
+  down: (data: DataData, query: GraphQLQueryFn, dataId: string) => DataData|Promise<DataData>
+}
+export type AnyMigration = ComponentMigration|PageMigration|DataMigration
 
 export type LinkGatheringFn = (data: any) => LinkDefinition[]
 export type FulltextGatheringFn = (data: any) => string[]

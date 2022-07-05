@@ -115,9 +115,11 @@ export interface APIPageTemplate extends APITemplate {
 export interface APIDataTemplate extends APITemplate {
   type: 'data'
   /**
-   * Data template implementations receive the dataId so they can self-reference in queries.
+   * Data template implementations receive the id of the dataroot the data is/will be inside,
+   * as well as the folder id (if applicable) and their own id. Keep in mind dataId will be
+   * null when it is a creation operation.
    */
-  validate?: (data: ComponentData, query: GraphQLQueryFn, dataId: string) => Promise<ValidationFeedback[]>
+  validate?: (data: ComponentData, query: GraphQLQueryFn, dataRootId: string, dataFolderId?: string, dataId?: string) => Promise<ValidationFeedback[]>
 
   migrations: DataMigration[]
 }

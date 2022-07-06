@@ -1,4 +1,4 @@
-import { PageRecord, ComponentData, DataData, PageData } from './component.js'
+import { ComponentData, DataData, PageData } from './component.js'
 import { LinkDefinition } from './links.js'
 import { stopwords } from './stopwords.js'
 
@@ -14,6 +14,50 @@ export interface ValidationFeedback {
   type?: `${ValidationMessageType}`
   path?: string
   message: string
+}
+
+/**
+ * This is information that the API will pass to the validation and migration
+ * functions provided by template implementations. It will help template developers
+ * do advanced logic when validating or migrating data, e.g. looking up a name in the
+ * API to make sure it hasn't been used already.
+ */
+export interface PageExtras {
+  /** A function for executing a graphql query to acquire more information than is already at hand. */
+  query: GraphQLQueryFn
+  /** The site id in which the page lives or is being created. */
+  siteId: string
+  /** The pagetree id in which the page lives or is being created. */
+  pagetreeId: string
+  /** The page id of the page's parent or parent-to-be. Null if it is the root page of a pagetree. */
+  parentId?: string
+  /** The page's id, presumably to be used in graphql queries. NOTE: will be null during page creation. */
+  pageId?: string
+  /** The path in the pagetree to the page, or what the path will be. NOTE: looking the page up by path will not work during page creation. */
+  pagePath?: string
+  /** The linkId the page has or will have. NOTE: looking the page up by linkId will not work during page creation. */
+  linkId: string
+  /** The name the page has or will have. NOTE: looking the page up by name will not work during page creation. */
+  name: string
+}
+export interface ComponentExtras extends PageExtras {
+  /**
+   * The full page data in case validating or migrating a component depends on state
+   * elsewhere in the page.
+   */
+  page: PageData
+  /** The path within the page data to the component currently being evaluated. */
+  path: string
+}
+export interface DataExtras {
+  /** A function for executing a graphql query to acquire more information than is already at hand. */
+  query: GraphQLQueryFn
+  /** The id of the dataroot the entry lives in or will be placed in. */
+  dataRootId: string
+  /** The id of the data folder the entry lives in or will be placed in. Null if directly in the dataroot. */
+  dataFolderId?: string
+  /** The id of the data entry itself. NOTE: will be null during page creation. */
+  dataId?: string
 }
 
 /**
@@ -71,11 +115,12 @@ export interface APIComponentTemplate extends APITemplate {
    * [{ type: 'error', path: 'name', message: 'A name is required.' }]
    *
    * This method is async so that you can do things like look in the database for conflicting
-   * names. The full page data, the path to this component, and a GraphQL query executor are
-   * available as parameters in case you need them. Keep in mind that the current editor MUST
-   * have access to any data you attempt to query in GraphQL.
+   * names. Keep in mind that the current editor MUST have access to any data you attempt to
+   * query in GraphQL.
+   *
+   * See the ComponentExtras type to see all the contextual information you'll have available.
    */
-  validate?: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => Promise<ValidationFeedback[]>
+  validate?: (data: ComponentData, extras: ComponentExtras) => Promise<ValidationFeedback[]>
 
   /**
    * Each template must provide a list of migrations for upgrading the data schema over time.
@@ -96,7 +141,7 @@ export interface APIPageTemplate extends APITemplate {
   /**
    * Page template implementations do not receive a path like component templates do.
    */
-  validate?: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord) => Promise<ValidationFeedback[]>
+  validate?: (data: PageData, extras: PageExtras) => Promise<ValidationFeedback[]>
 
   migrations: PageMigration[]
 
@@ -119,7 +164,7 @@ export interface APIDataTemplate extends APITemplate {
    * as well as the folder id (if applicable) and their own id. Keep in mind dataId will be
    * null when it is a creation operation.
    */
-  validate?: (data: ComponentData, query: GraphQLQueryFn, dataRootId: string, dataFolderId?: string, dataId?: string) => Promise<ValidationFeedback[]>
+  validate?: (data: ComponentData, extras: DataExtras) => Promise<ValidationFeedback[]>
 
   migrations: DataMigration[]
 }
@@ -154,21 +199,14 @@ export type APIAnyTemplate = APIComponentTemplate|APIPageTemplate|APIDataTemplat
  * If you're migrating a component template, you'll also get the page record and the
  * path inside that page's data to the component being migrated.
  */
-export interface Migration {
+export interface Migration <DataType, ExtraType> {
   createdAt: Date
+  up: (data: DataType, extras: ExtraType) => DataType|Promise<DataType>
+  down: (data: DataType, extras: ExtraType) => DataType|Promise<DataType>
 }
-export interface ComponentMigration extends Migration {
-  up: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => ComponentData|Promise<ComponentData>
-  down: (data: ComponentData, query: GraphQLQueryFn, page: PageRecord, path: string) => ComponentData|Promise<ComponentData>
-}
-export interface PageMigration extends Migration {
-  up: (data: PageData, query: GraphQLQueryFn, page: PageRecord) => PageData|Promise<PageData>
-  down: (data: PageData, query: GraphQLQueryFn, page: PageRecord) => PageData|Promise<PageData>
-}
-export interface DataMigration extends Migration {
-  up: (data: DataData, query: GraphQLQueryFn, dataRootId: string, dataFolderId?: string, dataId?: string) => DataData|Promise<DataData>
-  down: (data: DataData, query: GraphQLQueryFn, dataRootId: string, dataFolderId?: string, dataId?: string) => DataData|Promise<DataData>
-}
+type ComponentMigration = Migration<ComponentData, ComponentExtras>
+type PageMigration = Migration<PageData, PageExtras>
+type DataMigration = Migration<DataData, DataExtras>
 export type AnyMigration = ComponentMigration|PageMigration|DataMigration
 
 export type LinkGatheringFn = (data: any) => LinkDefinition[]

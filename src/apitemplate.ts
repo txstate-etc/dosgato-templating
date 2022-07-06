@@ -204,9 +204,9 @@ export interface Migration <DataType, ExtraType> {
   up: (data: DataType, extras: ExtraType) => DataType|Promise<DataType>
   down: (data: DataType, extras: ExtraType) => DataType|Promise<DataType>
 }
-type ComponentMigration = Migration<ComponentData, ComponentExtras>
-type PageMigration = Migration<PageData, PageExtras>
-type DataMigration = Migration<DataData, DataExtras>
+export type ComponentMigration = Migration<ComponentData, ComponentExtras>
+export type PageMigration = Migration<PageData, PageExtras>
+export type DataMigration = Migration<DataData, DataExtras>
 export type AnyMigration = ComponentMigration|PageMigration|DataMigration
 
 export type LinkGatheringFn = (data: any) => LinkDefinition[]

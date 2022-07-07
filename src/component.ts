@@ -243,12 +243,12 @@ export interface ComponentData {
 }
 
 export interface PageData extends ComponentData {
-  savedAtVersion: Date
+  savedAtVersion: string
 }
 
 export interface DataData {
   templateKey: string
-  savedAtVersion: Date
+  savedAtVersion: string
 }
 
 export interface ContextBase {

@@ -1,3 +1,4 @@
+import { isNotBlank } from 'txstate-utils'
 import { editBar, EditBarOpts, newBar } from './editbar.js'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
@@ -226,7 +227,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   newBar (areaName: string, opts: EditBarOpts = {}) {
     opts.label ??= this.newLabel(areaName)
     opts.extraClass ??= this.newClass(areaName)
-    return newBar(this.path + '.' + areaName, opts as EditBarOpts & { label: string })
+    return newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts as EditBarOpts & { label: string })
   }
 }
 
@@ -279,7 +280,7 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   }
 
   constructor (page: PageRecord<DataType>) {
-    super(page.data, '/', undefined)
+    super(page.data, '', undefined)
     this.pagePath = page.path
   }
 }

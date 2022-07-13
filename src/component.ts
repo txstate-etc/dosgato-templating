@@ -27,6 +27,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   hadError: boolean
 
   /**
+   * This property will be set during page render and you may refer to it at any time to
+   * determine whether you are doing your work in edit mode or regular rendering mode.
+   * The editBar and newBar methods will automatically use it to blank out the editing UI.
+   */
+  editMode: boolean
+
+  /**
    * The rendering server will provide an instance of the APIClient interface so that
    * you can run any API GraphQL query you like in your `fetch` function. There are also
    * some useful methods there like processRich to help you convert links in rich text
@@ -73,7 +80,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * you may add them to your this.areas map, e.g.
    * `this.areas.get('myarea').push(new Component(inheritedData, this.path + '/myarea/inherit1', this))`
    */
-  async fetch (editMode: boolean) {
+  async fetch () {
     return undefined as unknown as FetchedType
   }
 
@@ -92,7 +99,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * the context received from the parent, but use it sparingly since it will stall the process.
    * Try to do all asynchronous work in the fetch phase.
    */
-  setContext (renderCtxFromParent: RenderContextType, editMode: boolean): RenderContextType|Promise<RenderContextType> {
+  setContext (renderCtxFromParent: RenderContextType): RenderContextType|Promise<RenderContextType> {
     return renderCtxFromParent
   }
 
@@ -102,7 +109,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * render will be passed to parent components so that the HTML can be included during the
    * render of the parent component.
    */
-  abstract render (renderedAreas: Map<string, string[]>, editMode: boolean): string
+  abstract render (renderedAreas: Map<string, string[]>): string
 
   /**
    * Sometimes pages are requested with an alternate extension like .rss or .ics. In these
@@ -122,8 +129,9 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
 
   // the constructor is part of the recursive hydration mechanism: constructing
   // a Component will also construct/hydrate all its child components
-  constructor (data: DataType, path: string, parent: Component|undefined) {
+  constructor (data: DataType, path: string, parent: Component|undefined, editMode: boolean) {
     super()
+    this.editMode = editMode
     this.parent = parent
     const { areas, ...ownData } = data
     this.data = ownData
@@ -216,6 +224,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   editBar (opts: EditBarOpts = {}) {
     opts.label ??= this.editLabel()
     opts.extraClass ??= this.editClass()
+    opts.editMode = this.editMode
     return editBar(this.path, opts as EditBarOpts & { label: string })
   }
 
@@ -227,6 +236,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   newBar (areaName: string, opts: EditBarOpts = {}) {
     opts.label ??= this.newLabel(areaName)
     opts.extraClass ??= this.newClass(areaName)
+    opts.editMode = this.editMode
     return newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts as EditBarOpts & { label: string })
   }
 }
@@ -279,8 +289,8 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
     console.warn(`Recoverable issue occured during render of ${this.pagePath}. Component at ${path} threw the following error:`, e)
   }
 
-  constructor (page: PageRecord<DataType>) {
-    super(page.data, '', undefined)
+  constructor (page: PageRecord<DataType>, editMode: boolean) {
+    super(page.data, '', undefined, editMode)
     this.pagePath = page.path
   }
 }

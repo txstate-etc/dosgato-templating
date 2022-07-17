@@ -128,7 +128,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * the context received from the parent, but use it sparingly since it will stall the process.
    * Try to do all asynchronous work in the fetch phase.
    */
-  setContext (renderCtxFromParent: RenderContextType): RenderContextType|Promise<RenderContextType> {
+  setContext (renderCtxFromParent: RenderContextType): RenderContextType | Promise<RenderContextType> {
     return renderCtxFromParent
   }
 
@@ -158,7 +158,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
 
   // the constructor is part of the recursive hydration mechanism: constructing
   // a Component will also construct/hydrate all its child components
-  constructor (data: DataType, path: string, parent: Component|undefined, editMode: boolean) {
+  constructor (data: DataType, path: string, parent: Component | undefined, editMode: boolean) {
     super()
     this.editMode = editMode
     this.parent = parent
@@ -190,7 +190,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   // helper function to help you print an area, but you can also override this if you
   // need to do something advanced like wrap each component in a div
   renderComponents (components: RenderedComponent[] = [], opts?: { hideInheritBars?: boolean }) {
-    return components.flatMap(c => c.inherited && opts?.hideInheritBars ? [c.html] : [c.editbar, c.html]).join('')
+    return components.flatMap(c => c.component.inheritedFrom && opts?.hideInheritBars ? [c.html] : [c.component.editBar(), c.html]).join('')
   }
 
   /**
@@ -318,10 +318,9 @@ export interface EditBarOpts {
   inheritedFrom?: string
 }
 
-export interface RenderedComponent {
-  inherited: boolean
+export interface RenderedComponent<C extends Component = Component> {
+  component: C
   html: string
-  editbar: string
 }
 
 export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {

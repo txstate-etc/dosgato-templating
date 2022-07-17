@@ -2,7 +2,7 @@ import { ComponentData, DataData, PageData } from './component.js'
 import { LinkDefinition } from './links.js'
 import { stopwords } from './stopwords.js'
 
-export type APITemplateType = 'page'|'component'|'data'
+export type APITemplateType = 'page' | 'component' | 'data'
 
 export enum ValidationMessageType {
   ERROR = 'error',
@@ -169,7 +169,7 @@ export interface APIDataTemplate extends APITemplate {
   migrations: DataMigration[]
 }
 
-export type APIAnyTemplate = APIComponentTemplate|APIPageTemplate|APIDataTemplate
+export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate
 
 /**
  * In dosgato CMS, the data in the database is not altered except during user activity. This
@@ -201,13 +201,13 @@ export type APIAnyTemplate = APIComponentTemplate|APIPageTemplate|APIDataTemplat
  */
 export interface Migration <DataType, ExtraType> {
   createdAt: Date
-  up: (data: DataType, extras: ExtraType) => DataType|Promise<DataType>
-  down: (data: DataType, extras: ExtraType) => DataType|Promise<DataType>
+  up: (data: DataType, extras: ExtraType) => DataType | Promise<DataType>
+  down: (data: DataType, extras: ExtraType) => DataType | Promise<DataType>
 }
 export type ComponentMigration = Migration<ComponentData, ComponentExtras>
 export type PageMigration = Migration<PageData, PageExtras>
 export type DataMigration = Migration<DataData, DataExtras>
-export type AnyMigration = ComponentMigration|PageMigration|DataMigration
+export type AnyMigration = ComponentMigration | PageMigration | DataMigration
 
 export type LinkGatheringFn = (data: any) => LinkDefinition[]
 export type FulltextGatheringFn = (data: any) => string[]
@@ -217,7 +217,7 @@ export type GraphQLQueryFn = <T> (query: string, variables?: any) => Promise<T>
  * This function is used by API template definitions to help them identify links inside large blocks
  * of text and return them for indexing.
  */
-export function extractLinksFromText (text: string|undefined) {
+export function extractLinksFromText (text: string | undefined) {
   if (!text) return []
   const matches = text.matchAll(/{.*"type"\s?:\s+"\w+".*?}/gi)
   return Array.from(matches).map(m => JSON.parse(m[0])) as LinkDefinition[]

@@ -61,7 +61,7 @@ export interface APIClient {
    * method to convert a link, as input by a user, into a URL suitable for an href, or optionally
    * an absolute URL suitable for a backend http request or non-HTML document like an RSS feed.
    */
-  resolveLink: (link: string|LinkDefinition, absolute?: boolean) => Promise<string>
+  resolveLink: (link: string | LinkDefinition, absolute?: boolean) => Promise<string>
 
   /**
    * This function will be provided by the rendering server and should be used inside your fetch
@@ -79,7 +79,7 @@ export interface APIClient {
    * text gathered from a template's dialog should generally take precedence (though the dialog may
    * preload the alt text field with the asset repository default).
    */
-  getImgAttributes: (link: string|AssetLink, absolute?: boolean) => Promise<PictureAttributes>
+  getImgAttributes: (link: string | AssetLink, absolute?: boolean) => Promise<PictureAttributes>
 
   /** Get the data for a specific page. Will be dataloaded. */
   getPageData: ({ id, path }: { id?: string, path?: string }) => Promise<PageData>
@@ -90,7 +90,7 @@ export interface APIClient {
    * Returns an array in case link is a DataFolderLink. If link is a DataLink, will return an
    * array with length <= 1.
    */
-  getDataByLink: (link: string|DataLink|DataFolderLink) => Promise<DataData[]>
+  getDataByLink: (link: string | DataLink | DataFolderLink) => Promise<DataData[]>
 
   /**
    * Get data by full path including site. Use '/global' for global data. If path refers

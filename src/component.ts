@@ -1,5 +1,4 @@
 import { isNotBlank } from 'txstate-utils'
-import { editBar, EditBarOpts, newBar } from './editbar.js'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
@@ -11,9 +10,16 @@ import { APIClient } from './render.js'
  * parent and child components linked.
  */
 export abstract class Component<DataType extends ComponentData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends ResourceProvider {
-  // properties each template should provide
+  /**
+   * Provide this when you create a template to identify what you are defining.
+   */
   static templateKey: string
-  static templateName: string
+
+  /**
+   * These functions will be provided by the rendering server
+   */
+  static editBar: (path: string, opts: EditBarOpts) => string
+  static newBar: (path: string, opts: EditBarOpts) => string
 
   // properties for use during hydration, you do not have to provide these when
   // building a template, but you can use them in the functions you do provide
@@ -25,6 +31,21 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   parent?: Component
   page?: Page
   hadError: boolean
+  autoLabel!: () => string // the rendering server will fetch template names and implement these methods
+  autoNewLabel!: () => string
+
+  /**
+   * When hydrating an inherited component, the renderer will set this to the id of the page it
+   * came from. You may use this information in any of the phases to alter your behavior if needed.
+   *
+   * For instance, you may decide that your fetch function needs some extra information from the
+   * originating page instead of the page you're being inherited into (your `this.page` will
+   * be the page currently being rendered, NOT the page the inheritable component came from).
+   *
+   * This property is also used to alter the edit bar. Inherited components may never be edited
+   * except on their original page, so the edit bar will render with a link to the original page.
+   */
+  inheritedFrom?: string
 
   /**
    * This property will be set during page render and you may refer to it at any time to
@@ -65,6 +86,14 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * other Component instances.
    */
   getAncestorPageData!: () => Promise<PageData[]>
+
+  /**
+   * Some components may be inheritable to subpages within the same site. For instance, a site's
+   * social media links may appear on every page's footer. To accomplish this in your template,
+   * you need to fetch the data in your fetch phase and then call this function within your fetch
+   * to let the renderer know it needs to hydrate them and include them in the render.
+   */
+  registerInherited!: (area: string, components: ComponentData[], top?: true) => void
 
   /**
    * The first phase of rendering a component is the fetch phase. Each component may
@@ -109,7 +138,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * render will be passed to parent components so that the HTML can be included during the
    * render of the parent component.
    */
-  abstract render (renderedAreas: Map<string, string[]>): string
+  abstract render (renderedAreas: Map<string, RenderedComponent[]>): string
 
   /**
    * Sometimes pages are requested with an alternate extension like .rss or .ics. In these
@@ -158,6 +187,12 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     this.parent?.passError(e, path)
   }
 
+  // helper function to help you print an area, but you can also override this if you
+  // need to do something advanced like wrap each component in a div
+  renderComponents (components: RenderedComponent[] = [], opts?: { hideInheritBars?: boolean }) {
+    return components.flatMap(c => c.inherited && opts?.hideInheritBars ? [c.html] : [c.editbar, c.html]).join('')
+  }
+
   /**
    * During rendering, each component should determine the CSS blocks that it needs. This may
    * change depending on the data. For instance, if you need some CSS to style up an image, but
@@ -180,13 +215,12 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
 
   /**
    * Components may override this function to give their edit bars a custom
-   * label instead of using the templateName property
+   * label instead of using the template name
    *
    * For instance, you could return this.data.title
    */
   editLabel () {
-    const This = this.constructor as typeof Component
-    return This.templateName
+    return undefined
   }
 
   /**
@@ -205,7 +239,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * return "Add Layout"
    */
   newLabel (areaName: string) {
-    return 'Add Content'
+    return undefined
   }
 
   /**
@@ -222,10 +256,11 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Generally should not be overridden - override editLabel and editClass instead
    */
   editBar (opts: EditBarOpts = {}) {
-    opts.label ??= this.editLabel()
+    opts.label ??= this.editLabel() ?? this.autoLabel()
     opts.extraClass ??= this.editClass()
-    opts.editMode = this.editMode
-    return editBar(this.path, opts as EditBarOpts & { label: string })
+    opts.editMode ??= this.editMode
+    opts.inheritedFrom ??= this.inheritedFrom
+    return Component.editBar(this.path, opts as EditBarOpts & { label: string })
   }
 
   /**
@@ -234,10 +269,11 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Generally should not be overridden - override newLabel and newClass instead
    */
   newBar (areaName: string, opts: EditBarOpts = {}) {
-    opts.label ??= this.newLabel(areaName)
+    opts.label ??= this.newLabel(areaName) ?? this.autoNewLabel()
     opts.extraClass ??= this.newClass(areaName)
-    opts.editMode = this.editMode
-    return newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts as EditBarOpts & { label: string })
+    opts.editMode ??= this.editMode
+    opts.inheritedFrom ??= this.inheritedFrom
+    return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts as EditBarOpts & { label: string })
   }
 }
 
@@ -273,6 +309,19 @@ export interface ContextBase {
    * This way every page will have a perfect header tree and avoid complaints from WAVE.
    */
   headerLevel: number
+}
+
+export interface EditBarOpts {
+  extraClass?: string
+  label?: string
+  editMode?: boolean
+  inheritedFrom?: string
+}
+
+export interface RenderedComponent {
+  inherited: boolean
+  html: string
+  editbar: string
 }
 
 export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {

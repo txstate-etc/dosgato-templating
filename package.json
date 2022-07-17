@@ -1,6 +1,6 @@
 {
   "name": "@dosgato/templating",
-  "version": "0.0.39",
+  "version": "0.0.40",
   "description": "A library to support building templates for dosgato CMS.",
   "type": "module",
   "exports": {
@@ -18,7 +18,7 @@
     "txstate-utils": "^1.7.1"
   },
   "devDependencies": {
-    "eslint-config-standard-with-typescript": "^21.0.1",
+    "eslint-config-standard-with-typescript": "^22.0.0",
     "typescript": "^4.4.2"
   },
   "repository": {

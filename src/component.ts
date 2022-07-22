@@ -16,23 +16,22 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   static templateKey: string
 
   /**
-   * These functions will be provided by the rendering server
+   * The rendering server will provide an instance of the APIClient interface so that
+   * you can run any API GraphQL query you like in your `fetch` function. There are also
+   * some useful methods there like processRich to help you convert links in rich text
+   * strings.
+   *
+   * Do NOT mutate data received from the API as it may be cached and given to other
+   * Component instances that run the same type of query.
    */
-  static editBar: (path: string, opts: EditBarOpts) => string
-  static newBar: (path: string, opts: EditBarOpts) => string
+  api!: APIClient
 
-  // properties for use during hydration, you do not have to provide these when
-  // building a template, but you can use them in the functions you do provide
-  areas = new Map<string, Component[]>()
-  data: Omit<DataType, 'areas'>
-  fetched!: FetchedType
-  renderCtx!: RenderContextType
-  path: string
-  parent?: Component
-  page?: Page
-  hadError: boolean
-  autoLabel!: () => string // the rendering server will fetch template names and implement these methods
-  autoNewLabel!: () => string
+  /**
+   * This property will be set during page render and you may refer to it at any time to
+   * determine whether you are doing your work in edit mode or regular rendering mode.
+   * The editBar and newBar methods will automatically use it to blank out the editing UI.
+   */
+  editMode: boolean
 
   /**
    * When hydrating an inherited component, the renderer will set this to the id of the page it
@@ -48,54 +47,6 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   inheritedFrom?: string
 
   /**
-   * This property will be set during page render and you may refer to it at any time to
-   * determine whether you are doing your work in edit mode or regular rendering mode.
-   * The editBar and newBar methods will automatically use it to blank out the editing UI.
-   */
-  editMode: boolean
-
-  /**
-   * The rendering server will provide an instance of the APIClient interface so that
-   * you can run any API GraphQL query you like in your `fetch` function. There are also
-   * some useful methods there like processRich to help you convert links in rich text
-   * strings.
-   *
-   * Do NOT mutate data received from the API as it may be cached and given to other
-   * Component instances that run the same type of query.
-   */
-  api!: APIClient
-
-  /**
-   * Retrieve the data for the root page of the page this component is on. Useful for
-   * implementing inheritance schemes.
-   *
-   * This function will be provided by the rendering service.
-   *
-   * Do NOT mutate the data returned by this function, as it may be cached and given to
-   * other Component instances.
-   */
-  getRootPageData!: () => Promise<PageData>
-
-  /**
-   * Retrieve the data for all ancestor pages of the page this component is on. Useful
-   * for implementing inheritance schemes.
-   *
-   * This function will be provided by the rendering service.
-   *
-   * Do NOT mutate the data returned by this function, as it may be cached and given to
-   * other Component instances.
-   */
-  getAncestorPageData!: () => Promise<PageData[]>
-
-  /**
-   * Some components may be inheritable to subpages within the same site. For instance, a site's
-   * social media links may appear on every page's footer. To accomplish this in your template,
-   * you need to fetch the data in your fetch phase and then call this function within your fetch
-   * to let the renderer know it needs to hydrate them and include them in the render.
-   */
-  registerInherited!: (area: string, components: ComponentData[], top?: true) => void
-
-  /**
    * The first phase of rendering a component is the fetch phase. Each component may
    * provide a fetch method that looks up data it needs from external sources. This step
    * is FLAT - it will be executed concurrently for all the components on the page for
@@ -104,14 +55,30 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Place any needed data into the return object, and it will be available to you as `this.fetched`
    * during the rendering phase.
    *
-   * Note that this.page will be available, and getRootPageData and getAncestorPageData are
-   * available in case there is a need for inheritance. If you need to inherit entire components,
-   * you may add them to your this.areas map, e.g.
-   * `this.areas.get('myarea').push(new Component(inheritedData, this.path + '/myarea/inherit1', this))`
+   * Note that `this.page` will be available, and `this.api` has dataloaded methods for retrieving
+   * data from the API if, for instance, you need to inherit information from a parent or root
+   * page. If you need to inherit and render entire components from ancestor pages,
+   * you must register them. See the comment for `this.registerInherited`
+   *
+   * Try to minimize the number of round trips you make here, make use of Promise.all and such;
+   * remember that the api functions are mostly dataloaded so calling them simultaneously is
+   * advantageous where possible.
    */
   async fetch () {
     return undefined as unknown as FetchedType
   }
+
+  /**
+   * Some components may be inheritable to subpages within the same site. For instance, a site's
+   * social media links may appear on every page's footer. To accomplish this in your template,
+   * you need to fetch ancestor page data in your fetch phase, identify the component data you want
+   * to inherit, and then call this function within your fetch to let the renderer know it needs to
+   * process those components (hydrate them, call their fetch functions, and include them in the render).
+   *
+   * The inherited components will be added to the appropriate area's array in the renderedAreas
+   * parameter of your render function.
+   */
+  registerInherited!: (area: string, components: ComponentData[], top?: true) => void
 
   /**
    * The second phase of rendering a component is the context phase. This step is TOP-DOWN and
@@ -156,37 +123,6 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     return Array.from(renderedAreas.values()).join('')
   }
 
-  // the constructor is part of the recursive hydration mechanism: constructing
-  // a Component will also construct/hydrate all its child components
-  constructor (data: DataType, path: string, parent: Component | undefined, editMode: boolean) {
-    super()
-    this.editMode = editMode
-    this.parent = parent
-    const { areas, ...ownData } = data
-    this.data = ownData
-    this.path = path
-    this.hadError = false
-    let tmpParent = this.parent ?? this
-    while (!(tmpParent instanceof Page) && tmpParent.parent) tmpParent = tmpParent.parent
-    if (!(tmpParent instanceof Page)) throw new Error('Hydration failed, could not map component back to its page.')
-    this.page = tmpParent
-  }
-
-  /**
-   * For logging errors during rendering without crashing the render. If your fetch, setContext,
-   * render, or renderVariation functions throw, the error will be logged but the page render will
-   * continue. You generally do not need to use this function, just throw when appropriate.
-   */
-  logError (e: Error) {
-    this.hadError = true
-    this.passError(e, this.path)
-  }
-
-  // helper function for recursively passing the error up until it reaches the page
-  protected passError (e: Error, path: string) {
-    this.parent?.passError(e, path)
-  }
-
   // helper function to help you print an area, but you can also override this if you
   // need to do something advanced like wrap each component in a div
   renderComponents (components: RenderedComponent[] = [], opts?: { hideInheritBars?: boolean }) {
@@ -201,6 +137,8 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    *
    * This is evaluated after the fetch and context phases but before the rendering phase. If you
    * need any async data to make this determination, be sure to fetch it during the fetch phase.
+   *
+   * You should check `this.editMode` if you need to load CSS that alters edit bars.
    */
   cssBlocks (): string[] {
     return Array.from((this.constructor as any).cssBlocks.keys())
@@ -219,17 +157,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    *
    * For instance, you could return this.data.title
    */
-  editLabel () {
-    return undefined
-  }
+  editLabel () { return undefined }
 
   /**
    * Components may override this function to give their edit bars a custom
    * CSS class
    */
-  editClass () {
-    return undefined
-  }
+  editClass () { return undefined }
 
   /**
    * Components may override this function to give their new bars a custom
@@ -238,17 +172,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * For instance, an area that only accepts 'layout' components could
    * return "Add Layout"
    */
-  newLabel (areaName: string) {
-    return undefined
-  }
+  newLabel (areaName: string) { return undefined }
 
   /**
    * Components may override this function to give their new bars a custom
    * CSS class
    */
-  newClass (areaName: string) {
-    return undefined
-  }
+  newClass (areaName: string) { return undefined }
 
   /**
    * Components may override this function to provide a custom edit bar
@@ -256,7 +186,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Generally should not be overridden - override editLabel and editClass instead
    */
   editBar (opts: EditBarOpts = {}) {
-    opts.label ??= this.editLabel() ?? this.autoLabel()
+    opts.label ??= this.editLabel() ?? this.autoLabel
     opts.extraClass ??= this.editClass()
     opts.editMode ??= this.editMode
     opts.inheritedFrom ??= this.inheritedFrom
@@ -269,11 +199,63 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Generally should not be overridden - override newLabel and newClass instead
    */
   newBar (areaName: string, opts: EditBarOpts = {}) {
-    opts.label ??= this.newLabel(areaName) ?? this.autoNewLabel()
+    opts.label ??= this.newLabel(areaName) ?? this.autoNewLabel
     opts.extraClass ??= this.newClass(areaName)
     opts.editMode ??= this.editMode
     opts.inheritedFrom ??= this.inheritedFrom
     return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts as EditBarOpts & { label: string })
+  }
+
+  /**
+   * These functions will be provided by the rendering server to assist in the
+   * rendering process.
+   */
+  static editBar: (path: string, opts: EditBarOpts) => string
+  static newBar: (path: string, opts: EditBarOpts) => string
+  static repairHTML: (html: string) => string
+
+  // the constructor is part of the recursive hydration mechanism: constructing
+  // a Component will also construct/hydrate all its child components
+  constructor (data: DataType, path: string, parent: Component | undefined, editMode: boolean) {
+    super()
+    this.editMode = editMode
+    this.parent = parent
+    const { areas, ...ownData } = data
+    this.data = ownData
+    this.path = path
+    this.hadError = false
+    let tmpParent = this.parent ?? this
+    while (!(tmpParent instanceof Page) && tmpParent.parent) tmpParent = tmpParent.parent
+    if (!(tmpParent instanceof Page)) throw new Error('Hydration failed, could not map component back to its page.')
+    this.page = tmpParent
+  }
+
+  // Properties provided during the rendering process. You do not have to provide these when
+  // building a template, but you can use them in the functions you do provide
+  areas = new Map<string, Component[]>() // a Map of area names and the array of hydrated components in each
+  data: Omit<DataType, 'areas'> // the component data
+  fetched!: FetchedType // where we store the output from your `fetched` method
+  renderCtx!: RenderContextType // where we store the output from your `setContext` method
+  path: string // the dot-separated path to this component within the page data
+  parent?: Component // the hydrated parent component of this component
+  page?: Page // the hydrated page component this component lives in
+  hadError: boolean // will be true if the fetch encountered an error, render will be skipped
+  autoLabel!: string // the rendering server will fetch template names and fill this
+  autoNewLabel!: string // same comment as autoLabel
+
+  /**
+   * For logging errors during rendering without crashing the render. If your fetch, setContext,
+   * render, or renderVariation functions throw, the error will be logged but the page render will
+   * continue. You generally do not need to use this function, just throw when appropriate.
+   */
+  logError (e: Error) {
+    this.hadError = true
+    this.passError(e, this.path)
+  }
+
+  // helper function for recursively passing the error up until it reaches the page
+  protected passError (e: Error, path: string) {
+    this.parent?.passError(e, path)
   }
 }
 
@@ -327,9 +309,19 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   pagePath: string
 
   /**
-   * we will fill this before rendering, stuff that dosgato knows needs to be added to
-   * the <head> element
-   * the page's render function must include it
+   * This will be filled by the rendering server. The template properties are described
+   * over in apitemplate.ts in the comment for APIPageTemplate.templateProperties.
+   *
+   * The properties will appear in the GraphQL API and the rendering server will automatically
+   * download them and provide them here so all you need to do as a template developer is
+   * reference the values in your fetch/setContext/render functions.
+   */
+  templateProperties!: any
+
+  /**
+   * This is a bunch of javascript and CSS and meta tags managed by the DosGato engine. It will
+   * be filled by the rendering server and your render function for your page template
+   * should place include it in the <head> element
    */
   headContent!: string
 

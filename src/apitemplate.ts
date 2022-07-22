@@ -214,16 +214,6 @@ export type FulltextGatheringFn = (data: any) => string[]
 export type GraphQLQueryFn = <T> (query: string, variables?: any) => Promise<T>
 
 /**
- * This function is used by API template definitions to help them identify links inside large blocks
- * of text and return them for indexing.
- */
-export function extractLinksFromText (text: string | undefined) {
-  if (!text) return []
-  const matches = text.matchAll(/{.*"type"\s?:\s+"\w+".*?}/gi)
-  return Array.from(matches).map(m => JSON.parse(m[0])) as LinkDefinition[]
-}
-
-/**
  * This function is used by API template definitions to help them identify all the searchable
  * words in a large block of text and return them for indexing.
  */

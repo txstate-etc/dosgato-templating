@@ -69,3 +69,24 @@ export interface DataFolderLink {
 }
 
 export type LinkDefinition = AssetLink | AssetFolderLink | PageLink | WebLink | DataLink | DataFolderLink
+
+const LinkRegex = /{.*"type"\s?:\s+"\w+".*?}/g
+
+/**
+ * This function is used by template definitions to help them identify links inside large blocks
+ * of text and return them for indexing, and by render definitions to help replace them with the actual URLs
+ */
+export function extractLinksFromText (text: string | undefined) {
+  if (!text) return []
+  const matches = text.matchAll(LinkRegex)
+  return Array.from(matches).map(m => JSON.parse(m[0])) as LinkDefinition[]
+}
+
+/**
+ * This function is used by render definitions to replace links in large blocks with the actual
+ * URLs they point to at render time.
+ */
+export function replaceLinksInText (text: string, resolved: Map<string, string>) {
+  // TODO: figure out a broken link to use instead of '#', so it can be detected later
+  return text.replace(LinkRegex, m => resolved.get(m) ?? '#')
+}

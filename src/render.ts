@@ -1,5 +1,5 @@
 import { isBlank } from 'txstate-utils'
-import { ContextBase, DataData, PageData } from './component.js'
+import { ContextBase, DataData, PageData, PageRecord } from './component.js'
 import { AssetLink, DataFolderLink, DataLink, LinkDefinition } from './links.js'
 
 export function printHeader (ctx: ContextBase, content: string) {
@@ -57,7 +57,7 @@ export interface APIClient {
   query: <T = any>(query: string, variables?: any) => Promise<T>
 
   /**
-   * This function will be provided by the rendering server and should be used inside your fetch,
+   * This function will be provided by the rendering server and should be used inside your fetch
    * method to convert a link, as input by a user, into a URL suitable for an href, or optionally
    * an absolute URL suitable for a backend http request or non-HTML document like an RSS feed.
    */
@@ -78,14 +78,25 @@ export interface APIClient {
    * The alt text it returns will be the default alternative text from the asset repository. Alt
    * text gathered from a template's dialog should generally take precedence (though the dialog may
    * preload the alt text field with the asset repository default).
+   *
+   * Will be dataloaded.
    */
   getImgAttributes: (link: string | AssetLink, absolute?: boolean) => Promise<PictureAttributes>
 
-  /** Get the data for a specific page. Will be dataloaded. */
+  /** Get the data for a specific page.
+   *
+   * Will be dataloaded.
+   */
   getPageData: ({ id, path }: { id?: string, path?: string }) => Promise<PageData>
 
+  /** Get all ancestor pages of a specific page. First array element will be the pagetree root page. */
+  getAncestors: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord[]>
+
+  /** Get the pagetree root page from which the specified page descends. */
+  getRootPageData: ({ id, path }: { id?: string, path?: string }) => Promise<PageData>
+
   /**
-   * Get data items
+   * Get data entries by link or folder link
    *
    * Returns an array in case link is a DataFolderLink. If link is a DataLink, will return an
    * array with length <= 1.
@@ -93,8 +104,10 @@ export interface APIClient {
   getDataByLink: (link: string | DataLink | DataFolderLink) => Promise<DataData[]>
 
   /**
-   * Get data by full path including site. Use '/global' for global data. If path refers
-   * to a specific data item, will return an array with length <= 1.
+   * Get data entries by full path including site
+   *
+   * Use '/global' for global data. If path refers to a specific data item, will return
+   * an array with length <= 1.
    */
   getDataByPath: (templateKey: string, path: string) => Promise<DataData[]>
 }

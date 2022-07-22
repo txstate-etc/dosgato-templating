@@ -105,7 +105,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * render will be passed to parent components so that the HTML can be included during the
    * render of the parent component.
    */
-  abstract render (renderedAreas: Map<string, RenderedComponent[]>): string
+  abstract render (): string
 
   /**
    * Sometimes pages are requested with an alternate extension like .rss or .ics. In these
@@ -119,14 +119,15 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * This function will be run after the fetch phase. The context and html rendering phases
    * will be skipped.
    */
-  renderVariation (extension: string, renderedAreas: Map<string, string>) {
-    return Array.from(renderedAreas.values()).join('')
+  renderVariation (extension: string) {
+    return Array.from(this.renderedAreas.values()).flatMap(ras => ras.map(ra => ra.output)).join('')
   }
 
   // helper function to help you print an area, but you can also override this if you
   // need to do something advanced like wrap each component in a div
-  renderComponents (components: RenderedComponent[] = [], opts?: { hideInheritBars?: boolean }) {
-    return components.flatMap(c => c.component.inheritedFrom && opts?.hideInheritBars ? [c.html] : [c.component.editBar(), c.html]).join('')
+  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean }) {
+    if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
+    return components.flatMap(c => c.component.inheritedFrom && opts?.hideInheritBars ? [c.output] : [c.component.editBar(), c.output]).join('')
   }
 
   /**
@@ -239,6 +240,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   path: string // the dot-separated path to this component within the page data
   parent?: Component // the hydrated parent component of this component
   page?: Page // the hydrated page component this component lives in
+  renderedAreas!: Map<string, RenderedComponent[]> // render server sets this just before `render` is called
   hadError: boolean // will be true if the fetch encountered an error, render will be skipped
   autoLabel!: string // the rendering server will fetch template names and fill this
   autoNewLabel!: string // same comment as autoLabel
@@ -302,7 +304,7 @@ export interface EditBarOpts {
 
 export interface RenderedComponent<C extends Component = Component> {
   component: C
-  html: string
+  output: string
 }
 
 export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {

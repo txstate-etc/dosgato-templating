@@ -158,13 +158,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    *
    * For instance, you could return this.data.title
    */
-  editLabel () { return undefined }
+  editLabel (): string | undefined { return undefined }
 
   /**
    * Components may override this function to give their edit bars a custom
    * CSS class
    */
-  editClass () { return undefined }
+  editClass (): string | undefined { return undefined }
 
   /**
    * Components may override this function to give their new bars a custom
@@ -173,13 +173,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * For instance, an area that only accepts 'layout' components could
    * return "Add Layout"
    */
-  newLabel (areaName: string) { return undefined }
+  newLabel (areaName: string): string | undefined { return undefined }
 
   /**
    * Components may override this function to give their new bars a custom
    * CSS class
    */
-  newClass (areaName: string) { return undefined }
+  newClass (areaName: string): string | undefined { return undefined }
 
   /**
    * Components may override this function to provide a custom edit bar
@@ -200,7 +200,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Generally should not be overridden - override newLabel and newClass instead
    */
   newBar (areaName: string, opts: EditBarOpts = {}) {
-    opts.label ??= this.newLabel(areaName) ?? this.autoNewLabel
+    opts.label ??= this.newLabel(areaName) ?? (this.areas.size > 1 ? `Add ${areaName} Content` : `Add ${this.autoLabel} Content`)
     opts.extraClass ??= this.newClass(areaName)
     opts.editMode ??= this.editMode
     opts.inheritedFrom ??= this.inheritedFrom
@@ -243,7 +243,6 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderedAreas!: Map<string, RenderedComponent[]> // render server sets this just before `render` is called
   hadError: boolean // will be true if the fetch encountered an error, render will be skipped
   autoLabel!: string // the rendering server will fetch template names and fill this
-  autoNewLabel!: string // same comment as autoLabel
 
   /**
    * For logging errors during rendering without crashing the render. If your fetch, setContext,

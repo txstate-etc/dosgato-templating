@@ -1,6 +1,6 @@
 import { isBlank } from 'txstate-utils'
 import { ContextBase, DataData, PageData, PageRecord } from './component.js'
-import { AssetLink, DataFolderLink, DataLink, LinkDefinition } from './links.js'
+import { AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 export function printHeader (ctx: ContextBase, content: string) {
   if (isBlank(content)) return ''
@@ -87,13 +87,13 @@ export interface APIClient {
    *
    * Will be dataloaded.
    */
-  getPageData: ({ id, path }: { id?: string, path?: string }) => Promise<PageData>
+  getPage: ({ id, path, link }: { id?: string, path?: string, link?: string | PageLink }) => Promise<PageRecord<PageData>>
 
   /** Get all ancestor pages of a specific page. First array element will be the pagetree root page. */
-  getAncestors: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord[]>
+  getAncestors: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord<PageData>[]>
 
   /** Get the pagetree root page from which the specified page descends. */
-  getRootPageData: ({ id, path }: { id?: string, path?: string }) => Promise<PageData>
+  getRootPage: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord<PageData>>
 
   /**
    * Get data entries by link or folder link

@@ -78,7 +78,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * The inherited components will be added to the appropriate area's array in the renderedAreas
    * parameter of your render function.
    */
-  registerInherited!: (area: string, components: ComponentData[], top?: true) => void
+  registerInherited!: (area: string, components: ComponentData[], fromPageId: string, top?: true) => void
 
   /**
    * The second phase of rendering a component is the context phase. This step is TOP-DOWN and

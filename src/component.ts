@@ -213,7 +213,6 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   static editBar: (path: string, opts: EditBarOpts) => string
   static newBar: (path: string, opts: EditBarOpts) => string
-  static repairHTML: (html: string) => string
 
   // the constructor is part of the recursive hydration mechanism: constructing
   // a Component will also construct/hydrate all its child components

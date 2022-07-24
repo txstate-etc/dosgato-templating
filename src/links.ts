@@ -28,8 +28,20 @@ export interface AssetFolderLink {
  */
 export interface PageLink {
   type: 'page'
+  siteId: string
   linkId: string
   path: string
+}
+
+/**
+ * When looking up a page by linkId, the context matters. For instance, if I'm
+ * gathering data to helps render a page that's in the same site as the target
+ * page, I want to be sure to get the version of the page from the same pagetree.
+ */
+export interface PageLinkWithContext extends PageLink {
+  context?: {
+    pagetreeId: string
+  }
 }
 
 /**

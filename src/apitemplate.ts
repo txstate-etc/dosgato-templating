@@ -25,10 +25,10 @@ export interface ValidationFeedback {
 export interface PageExtras {
   /** A function for executing a graphql query to acquire more information than is already at hand. */
   query: GraphQLQueryFn
-  /** The site id in which the page lives or is being created. */
-  siteId: string
-  /** The pagetree id in which the page lives or is being created. */
-  pagetreeId: string
+  /** The site id in which the page lives or is being created. Null if we are validating creation of a site. */
+  siteId?: string
+  /** The pagetree id in which the page lives or is being created. Null if we are validating creation of a site or pagetree. */
+  pagetreeId?: string
   /** The page id of the page's parent or parent-to-be. Null if it is the root page of a pagetree. */
   parentId?: string
   /** The page's id, presumably to be used in graphql queries. NOTE: will be null during page creation. */

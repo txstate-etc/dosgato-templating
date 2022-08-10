@@ -120,7 +120,7 @@ export interface APIComponentTemplate extends APITemplate {
    *
    * See the ComponentExtras type to see all the contextual information you'll have available.
    */
-  validate?: (data: ComponentData, extras: ComponentExtras) => Promise<ValidationFeedback[]>
+  validate?: <T extends ComponentData>(data: T, extras: ComponentExtras) => Promise<ValidationFeedback[]>
 
   /**
    * Each template must provide a list of migrations for upgrading the data schema over time.
@@ -141,7 +141,7 @@ export interface APIPageTemplate extends APITemplate {
   /**
    * Page template implementations do not receive a path like component templates do.
    */
-  validate?: (data: PageData, extras: PageExtras) => Promise<ValidationFeedback[]>
+  validate?: <T extends PageData>(data: T, extras: PageExtras) => Promise<ValidationFeedback[]>
 
   migrations?: PageMigration[]
 
@@ -164,7 +164,7 @@ export interface APIDataTemplate extends APITemplate {
    * as well as the folder id (if applicable) and their own id. Keep in mind dataId will be
    * null when it is a creation operation.
    */
-  validate?: (data: ComponentData, extras: DataExtras) => Promise<ValidationFeedback[]>
+  validate?: <T extends DataData>(data: T, extras: DataExtras) => Promise<ValidationFeedback[]>
 
   migrations?: DataMigration[]
 }

@@ -63,7 +63,7 @@ export interface DataExtras {
 /**
  * This interface lays out the structure the API needs for each template in the system.
  */
-export interface APITemplate {
+export interface APITemplate<DataType> {
   type: APITemplateType
 
   /**
@@ -82,17 +82,17 @@ export interface APITemplate {
    * can be indexed. Only fields that are links need to be returned. Links inside rich editor
    * text will be extracted automatically from any text returned by getFulltext (see below)
    */
-  getLinks?: LinkGatheringFn
+  getLinks?: LinkGatheringFn<DataType>
 
   /**
    * Each template must provide the text from any text or rich editor data it possesses, so that
    * the text can be decomposed into words and indexed for fulltext searches. Any text returned
    * by this function will also be scanned for links.
    */
-  getFulltext?: FulltextGatheringFn
+  getFulltext?: FulltextGatheringFn<DataType>
 }
 
-export interface APIComponentTemplate extends APITemplate {
+export interface APIComponentTemplate<DataType extends ComponentData = any> extends APITemplate<DataType> {
   type: 'component'
 
   /**
@@ -120,17 +120,17 @@ export interface APIComponentTemplate extends APITemplate {
    *
    * See the ComponentExtras type to see all the contextual information you'll have available.
    */
-  validate?: <T extends ComponentData>(data: T, extras: ComponentExtras) => Promise<ValidationFeedback[]>
+  validate?: (data: DataType, extras: ComponentExtras) => Promise<ValidationFeedback[]>
 
   /**
    * Each template must provide a list of migrations for upgrading the data schema over time.
    * Typically this will start as an empty array and migrations will be added as the template
    * gets refactored.
    */
-  migrations?: ComponentMigration[]
+  migrations?: ComponentMigration<DataType>[]
 }
 
-export interface APIPageTemplate extends APITemplate {
+export interface APIPageTemplate<DataType extends PageData = any> extends APITemplate<DataType> {
   type: 'page'
 
   /**
@@ -141,9 +141,9 @@ export interface APIPageTemplate extends APITemplate {
   /**
    * Page template implementations do not receive a path like component templates do.
    */
-  validate?: <T extends PageData>(data: T, extras: PageExtras) => Promise<ValidationFeedback[]>
+  validate?: (data: DataType, extras: PageExtras) => Promise<ValidationFeedback[]>
 
-  migrations?: PageMigration[]
+  migrations?: PageMigration<DataType>[]
 
   /**
    * Hard-coded properties that may be set on page templates to influence the rendering of
@@ -157,16 +157,16 @@ export interface APIPageTemplate extends APITemplate {
   templateProperties?: any
 }
 
-export interface APIDataTemplate extends APITemplate {
+export interface APIDataTemplate<DataType extends DataData = any> extends APITemplate<DataType> {
   type: 'data'
   /**
    * Data template implementations receive the id of the dataroot the data is/will be inside,
    * as well as the folder id (if applicable) and their own id. Keep in mind dataId will be
    * null when it is a creation operation.
    */
-  validate?: <T extends DataData>(data: T, extras: DataExtras) => Promise<ValidationFeedback[]>
+  validate?: (data: DataType, extras: DataExtras) => Promise<ValidationFeedback[]>
 
-  migrations?: DataMigration[]
+  migrations?: DataMigration<DataType>[]
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate
@@ -204,13 +204,13 @@ export interface Migration <DataType, ExtraType> {
   up: (data: DataType, extras: ExtraType) => DataType | Promise<DataType>
   down: (data: DataType, extras: ExtraType) => DataType | Promise<DataType>
 }
-export type ComponentMigration = Migration<ComponentData, ComponentExtras>
-export type PageMigration = Migration<PageData, PageExtras>
-export type DataMigration = Migration<DataData, DataExtras>
+export type ComponentMigration<DataType extends ComponentData = ComponentData> = Migration<DataType, ComponentExtras>
+export type PageMigration<DataType extends PageData = PageData> = Migration<DataType, PageExtras>
+export type DataMigration<DataType extends DataData = DataData> = Migration<DataType, DataExtras>
 export type AnyMigration = ComponentMigration | PageMigration | DataMigration
 
-export type LinkGatheringFn = (data: any) => LinkDefinition[]
-export type FulltextGatheringFn = (data: any) => string[]
+export type LinkGatheringFn<DataType> = (data: DataType) => LinkDefinition[]
+export type FulltextGatheringFn<DataType> = (data: DataType) => string[]
 export type GraphQLQueryFn = <T> (query: string, variables?: any) => Promise<T>
 
 /**

@@ -82,14 +82,14 @@ export interface APITemplate {
    * can be indexed. Only fields that are links need to be returned. Links inside rich editor
    * text will be extracted automatically from any text returned by getFulltext (see below)
    */
-  getLinks: LinkGatheringFn
+  getLinks?: LinkGatheringFn
 
   /**
    * Each template must provide the text from any text or rich editor data it possesses, so that
    * the text can be decomposed into words and indexed for fulltext searches. Any text returned
    * by this function will also be scanned for links.
    */
-  getFulltext: FulltextGatheringFn
+  getFulltext?: FulltextGatheringFn
 }
 
 export interface APIComponentTemplate extends APITemplate {
@@ -127,7 +127,7 @@ export interface APIComponentTemplate extends APITemplate {
    * Typically this will start as an empty array and migrations will be added as the template
    * gets refactored.
    */
-  migrations: ComponentMigration[]
+  migrations?: ComponentMigration[]
 }
 
 export interface APIPageTemplate extends APITemplate {
@@ -136,14 +136,14 @@ export interface APIPageTemplate extends APITemplate {
   /**
    * Page areas are the same as components but are required.
    */
-  areas: Record<string, string[]>
+  areas?: Record<string, string[]>
 
   /**
    * Page template implementations do not receive a path like component templates do.
    */
   validate?: (data: PageData, extras: PageExtras) => Promise<ValidationFeedback[]>
 
-  migrations: PageMigration[]
+  migrations?: PageMigration[]
 
   /**
    * Hard-coded properties that may be set on page templates to influence the rendering of
@@ -166,7 +166,7 @@ export interface APIDataTemplate extends APITemplate {
    */
   validate?: (data: ComponentData, extras: DataExtras) => Promise<ValidationFeedback[]>
 
-  migrations: DataMigration[]
+  migrations?: DataMigration[]
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate

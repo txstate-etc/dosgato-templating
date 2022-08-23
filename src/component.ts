@@ -1,3 +1,4 @@
+import type { IncomingHttpHeaders } from 'http'
 import { isNotBlank } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
@@ -242,7 +243,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderedAreas!: Map<string, RenderedComponent[]> // render server sets this just before `render` is called
   hadError: boolean // will be true if the fetch encountered an error, render will be skipped
   autoLabel!: string // the rendering server will fetch template names and fill this
-  reqHeaders!: Headers // the HTTP headers of the request being processed, in case it would change the render
+  reqHeaders!: IncomingHttpHeaders // the HTTP headers of the request being processed, in case it would change the render
   reqUrl!: URL // the URL of the request being processed, so you can access the query or do routing work
 
   /**
@@ -331,7 +332,7 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
    * This method will be provided to page templates by the render server. You may call it
    * at any time during fetch, context, or render, to set an HTTP header on the response
    */
-  addHeader!: (key: string, value: string) => void
+  addHeader!: (key: string, value: string | undefined) => void
 
   protected passError (e: Error, path: string) {
     console.warn(`Recoverable issue occured during render of ${this.pagePath}. Component at ${path} threw the following error:`, e)

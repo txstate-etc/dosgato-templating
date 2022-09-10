@@ -80,6 +80,28 @@ export interface FileDeclaration {
   mime?: string
 }
 
+export interface SCSSInclude {
+  /**
+   * The SASS code as a string. This SCSS should generally only include functions
+   * and mixins. Regular CSS should be included as its own block so it can be de-duplicated.
+   *
+   * Variables don't make much sense because we only have one version of a block every
+   * time it's used, whereas variables usually change from page template to page template.
+   * Use CSS variables instead.
+   */
+  scss?: string
+  /**
+   * A file path to the SASS code.
+   */
+  path?: string
+  /**
+   * A version string following SEMVER. If multiple blocks are provided with the same name,
+   * the one with the highest version number will be chosen. If blocks of different major
+   * versions are provided, an alert will appear in the log.
+   */
+  version?: string
+}
+
 /**
  * This class is a parent class for Component, but it can also be used as a standalone
  * if you are creating a set of templates with shared resources. This will be fairly
@@ -111,6 +133,20 @@ export abstract class ResourceProvider {
    * and the user has clicked something.
    */
   static cssBlocks: Map<string, CSSBlock> = new Map()
+
+  /**
+   * A template can provide SASS mixins and functions for use by other SASS-based CSS
+   * blocks.
+   *
+   * These includes can be utilized by other SASS with the SASS `@use` and `@include`
+   * commands, e.g.
+   * ```
+   * @use 'my-mixin-name' as mx;
+   * .someclass { @include mx.somemixin(); }
+   * ```
+   * In this case `my-mixin-name` is the key used for this Map.
+   */
+  static scssIncludes: Map<string, SCSSInclude> = new Map()
 
   /**
    * Same as cssBlocks() but for javascript.

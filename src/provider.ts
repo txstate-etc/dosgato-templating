@@ -1,23 +1,83 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 
 export interface CSSBlock {
+  /**
+   * The CSS as a string. Provide either this or `path`.
+   */
   css?: string
+  /**
+   * A file path to the CSS. The rendering server will read the file on startup.
+   */
   path?: string
+  /**
+   * This CSS is actually SASS and requires a compile. The rendering server will
+   * perform the compilation on startup.
+   */
+  sass?: boolean
+  /**
+   * A version string following SEMVER. If multiple blocks are provided with the same name,
+   * the one with the highest version number will be chosen. If blocks of different major
+   * versions are provided, an alert will appear in the log.
+   */
   version?: string
+  /**
+   * The CSS provided by this block applies to elements that are not on screen at
+   * page load, i.e. modals and dialogs.
+   *
+   * Setting it true will improve our time-to-first-paint, but any CSS that does
+   * apply to elements on screen at page load will cause a visible re-render that
+   * may disturb the user.
+   */
   async?: boolean
 }
 
 export interface JSBlock {
+  /**
+   * The javascript as a string. Provide either this or `path`.
+   */
   js?: string
+  /**
+   * A file path to the javascript. The rendering server will read the file on startup.
+   */
   path?: string
+  /**
+   * A version string following SEMVER. If multiple blocks are provided with the same name,
+   * the one with the highest version number will be chosen. If blocks of different major
+   * versions are provided, an alert will appear in the log.
+   */
   version?: string
+  /**
+   * The javascript provided by this block does not need to run before the DOM finishes
+   * loading. For instance, if the javascript only places event listeners and does not
+   * modify the DOM or create globals on first run, it is eligible for this flag.
+   *
+   * Setting it true will improve our time-to-first paint, but any DOM manipulations on
+   * first run will cause visible repaints that may disturb the user.
+   *
+   * Additionally, you cannot depend on load order of any async JS, so libraries like
+   * jquery that create globals intended for later use must be loaded synchronously
+   * (unless their dependents are smart enough to wait for the global to be defined).
+   */
   async?: boolean
 }
 
 export interface FileDeclaration {
+  /**
+   * The path to the file.
+   */
   path: string
+  /**
+   * A version string following SEMVER. If multiple files are provided with the same name,
+   * the one with the highest version number will be chosen.
+   */
   version?: string
-  mime: string
+  /**
+   * The mime type of the file. If omitted, it will be automatically detected from the
+   * file data.
+   *
+   * If needed, you may also specify a non-default charset with e.g. `text/html; charset=ascii`
+   */
+  mime?: string
 }
 
 /**
@@ -88,7 +148,8 @@ export abstract class ResourceProvider {
   /**
    * Template code will need to generate HTML and CSS that points at the static files
    * provided above. In order to do so, we need information from the template registry (since
-   * we have to deduplicate with other registered templates at startup time).
+   * we have to deduplicate with other registered templates at startup time, and the structure
+   * of the webpath in general is the render server's concern).
    *
    * In order to avoid an ES6 dependency on the registry, we will have the registry write
    * back to this map as templates are registered.

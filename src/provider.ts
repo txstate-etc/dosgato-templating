@@ -7,6 +7,10 @@ export interface CSSBlock {
   css?: string
   /**
    * A file path to the CSS. The rendering server will read the file on startup.
+   *
+   * Typically you will set this with import.meta.url so that the path will be relative
+   * to the javascript code where you are writing your template class:
+   * path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../static/mystyles.css')
    */
   path?: string
   /**
@@ -38,6 +42,11 @@ export interface JSBlock {
   js?: string
   /**
    * A file path to the javascript. The rendering server will read the file on startup.
+   *
+   * Typically you will set this with import.meta.url so that the path will be relative
+   * to the javascript code where you are writing your template class:
+   * path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../static/myscript.js')
+
    */
   path?: string
   /**
@@ -64,6 +73,10 @@ export interface JSBlock {
 export interface FileDeclaration {
   /**
    * The path to the file.
+   *
+   * Typically you will set this with import.meta.url so that the path will be relative
+   * to the javascript code where you are writing your template class:
+   * path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../static/myfont.ttf')
    */
   path: string
   /**
@@ -162,9 +175,6 @@ export abstract class ResourceProvider {
    * a filesystem path in this static property and the files will be served by the rendering
    * server. Use the provided `webpaths` map to obtain the proper resource URLs. They will be
    * available as soon as your template has been registered to the rendering server's templateRegistry.
-   *
-   * Typically you will set this to something like `${__dirname}/static` so that the path will be relative
-   * to where you are writing your template class.
    *
    * The map name you pick should be globally unique and only collide with other templates as
    * intended. For instance, the fontawesome font only needs to be provided once, even though

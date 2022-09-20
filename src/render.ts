@@ -64,6 +64,15 @@ export interface APIClient {
   resolveLink: (lnk: string | LinkDefinition, opts?: { absolute?: boolean, extension?: string }) => Promise<string>
 
   /**
+   * Get a link href for a page
+   *
+   * By default this will generate relative links based on the page currently being rendered. Set
+   * absolute: true to generate a full URL suitable for a backend http request or non-HTML document
+   * like an RSS feed.
+   */
+  getHref: (page: PageRecord, absolute?: boolean) => string
+
+  /**
    * This function will be provided by the rendering server and should be used inside your fetch
    * method to prepare editor-provided HTML for rendering. It will do things like find and resolve
    * link definitions in the internal dosgato format and clean up tags that were accidentally left

@@ -310,6 +310,16 @@ export interface RenderedComponent<C extends Component = Component> {
 }
 
 export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {
+  /**
+   * The page id in case you need to pass it to the API, e.g. this.api.getRootPage(this.id)
+   * in a page template or this.api.getRootPage(this.page.id) in a component template.
+   */
+  id: string
+
+  /**
+   * The page path, can also be used to figure out where the page is, but you'll likely prefer
+   * using the page id in API queries
+   */
   pagePath: string
 
   /**
@@ -342,5 +352,6 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   constructor (page: PageRecord<DataType>, editMode: boolean) {
     super(page.data, '', undefined, editMode)
     this.pagePath = page.path
+    this.id = page.id
   }
 }

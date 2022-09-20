@@ -70,7 +70,7 @@ export interface APIClient {
    * absolute: true to generate a full URL suitable for a backend http request or non-HTML document
    * like an RSS feed.
    */
-  getHref: (page: PageRecord, absolute?: boolean) => string
+  getHref: (page: PageRecord, opts?: { absolute?: boolean, extension?: string }) => string
 
   /**
    * This function will be provided by the rendering server and should be used inside your fetch

@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders } from 'http'
 import type { ParsedUrlQuery } from 'querystring'
-import { isNotBlank } from 'txstate-utils'
+import { isNotBlank, omit } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
@@ -263,11 +263,22 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   }
 }
 
+export interface SiteInfo {
+  id: string
+  name: string
+  launched: boolean
+  url?: {
+    prefix: string
+    path: string
+  }
+}
+
 export interface PageRecord<DataType extends PageData = PageData> {
   id: string
   linkId: string
   path: string
   data: DataType
+  site: SiteInfo
 }
 
 export interface ComponentData {
@@ -317,10 +328,9 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   id: string
 
   /**
-   * The page path, can also be used to figure out where the page is, but you'll likely prefer
-   * using the page id in API queries
+   * Other data we've already collected about the page being rendered, in case it's needed.
    */
-  pagePath: string
+  pageInfo: PageRecord<DataType>
 
   /**
    * This will be filled by the rendering server. The template properties are described
@@ -346,12 +356,12 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   addHeader!: (key: string, value: string | undefined) => void
 
   protected passError (e: Error, path: string) {
-    console.warn(`Recoverable issue occured during render of ${this.pagePath}. Component at ${path} threw the following error:`, e)
+    console.warn(`Recoverable issue occured during render of ${this.pageInfo.path}. Component at ${path} threw the following error:`, e)
   }
 
   constructor (page: PageRecord<DataType>, editMode: boolean) {
     super(page.data, '', undefined, editMode)
-    this.pagePath = page.path
     this.id = page.id
+    this.pageInfo = page
   }
 }

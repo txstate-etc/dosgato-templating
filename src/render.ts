@@ -1,5 +1,5 @@
 import { isBlank } from 'txstate-utils'
-import { ContextBase, DataData, PageData, PageRecord } from './component.js'
+import { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
 import { AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 export function printHeader (ctx: ContextBase, content: string) {
@@ -70,7 +70,7 @@ export interface APIClient {
    * absolute: true to generate a full URL suitable for a backend http request or non-HTML document
    * like an RSS feed.
    */
-  getHref: (page: PageRecord, opts?: { absolute?: boolean, extension?: string }) => string
+  getHref: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => string
 
   /**
    * This function will be provided by the rendering server and should be used inside your fetch

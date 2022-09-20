@@ -281,6 +281,10 @@ export interface PageRecord<DataType extends PageData = PageData> {
   site: SiteInfo
 }
 
+export interface PageRecordOptionalData<DataType extends PageData = PageData> extends Omit<PageRecord<DataType>, 'data'> {
+  data?: DataType
+}
+
 export interface ComponentData {
   templateKey: string
   areas?: Record<string, ComponentData[]>

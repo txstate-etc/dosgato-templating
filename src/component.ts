@@ -291,6 +291,8 @@ export interface SiteInfo {
 export interface PageRecord<DataType extends PageData = PageData> {
   id: string
   linkId: string
+  createdAt: Date
+  modifiedAt: Date
   path: string
   data: DataType
   site: SiteInfo

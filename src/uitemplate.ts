@@ -1,4 +1,4 @@
-import { IconifyIcon } from '@iconify/svelte'
+import type { IconifyIcon } from '@iconify/svelte'
 
 export interface SvelteComponent {
   $set: (props?: Record<string, any>) => void

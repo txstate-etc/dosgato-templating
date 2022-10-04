@@ -1,5 +1,11 @@
 import { IconifyIcon } from '@iconify/svelte'
-import { SvelteComponent } from 'svelte'
+
+export interface SvelteComponent {
+  $set: (props?: Record<string, any>) => void
+  $on: (event: string, callback: (event: any) => void) => () => void
+  $destroy: () => void
+  [accessor: string]: any
+}
 
 // We're extending IconifyIcon here so that templates can provide a raw SVG
 // instead of an IconifyIcon by puting the SVG contents into `body` and
@@ -12,7 +18,7 @@ export interface UITemplate {
   templateKey: string
 
   // A svelte component that expects to be inside a @dosgato/dialog Form component
-  dialog: typeof SvelteComponent
+  dialog: SvelteComponent
 
   // if present this SVG will be used when presenting users with
   // an array of choices of templates to create. Ideally it should look

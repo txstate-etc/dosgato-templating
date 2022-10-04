@@ -1,6 +1,6 @@
 {
   "name": "@dosgato/templating",
-  "version": "0.0.63",
+  "version": "0.0.64",
   "description": "A library to support building templates for dosgato CMS.",
   "type": "module",
   "exports": {
@@ -14,7 +14,6 @@
     "build": "rm -rf dist && tsc"
   },
   "dependencies": {
-    "@iconify/svelte": "^3.0.0",
     "txstate-utils": "^1.7.4"
   },
   "devDependencies": {

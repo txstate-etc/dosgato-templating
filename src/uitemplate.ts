@@ -1,10 +1,21 @@
-import type { IconifyIcon } from '@iconify/svelte'
-
 export interface SvelteComponent {
   $set: (props?: Record<string, any>) => void
   $on: (event: string, callback: (event: any) => void) => () => void
   $destroy: () => void
   [accessor: string]: any
+}
+
+// extremely brief version of the IconifyIcon definition so we don't have to import
+// the whole library, may need to keep this in sync with @iconify/svelte (currently 3.0.0)
+interface IconifyIcon {
+  body: string
+  rotate?: number
+  hFlip?: boolean
+  vFlip?: boolean
+  left?: number
+  top?: number
+  width?: number
+  height?: number
 }
 
 // We're extending IconifyIcon here so that templates can provide a raw SVG

@@ -129,15 +129,24 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * helper function to print an area's component list, but you can also override this if you
    * need to do something advanced like wrap each component in a div
    */
-  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean, editBarOpts?: EditBarOpts }) {
+  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean, editBarOpts?: RenderAreaEditBarOpts }) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
-    return components.flatMap(c => c.component.inheritedFrom && opts?.hideInheritBars ? [c.output] : [c.component.editBar(opts?.editBarOpts), c.output]).join('')
+    return components
+      .flatMap(c =>
+        c.component.inheritedFrom &&
+        opts?.hideInheritBars
+          ? [c.output]
+          : [c.component.editBar({
+              ...opts?.editBarOpts,
+              label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
+              extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
+            }), c.output]).join('')
   }
 
   /**
    * helper function to print an area and set a minimum or maximum number of components
    */
-  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, newBarOpts: NewBarOpts, editBarOpts: EditBarOpts }) {
+  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, newBarOpts: NewBarOpts, editBarOpts: RenderAreaEditBarOpts }) {
     const components = this.renderedAreas.get(areaName) ?? []
     const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
     let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0) } })
@@ -146,6 +155,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     } else {
       output += this.newBar(areaName, opts?.newBarOpts)
     }
+    return output
   }
 
   /**
@@ -205,11 +215,12 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Generally should not be overridden - override editLabel and editClass instead
    */
   editBar (opts: EditBarOpts = {}) {
-    opts.label ??= this.editLabel() ?? this.autoLabel
-    opts.extraClass ??= this.editClass()
-    opts.editMode ??= this.editMode
-    opts.inheritedFrom ??= this.inheritedFrom
-    return Component.editBar(this.path, opts as EditBarOpts & { label: string })
+    const options = { ...opts }
+    options.label ??= this.editLabel() ?? this.autoLabel
+    options.extraClass ??= this.editClass()
+    options.editMode ??= this.editMode
+    options.inheritedFrom ??= this.inheritedFrom
+    return Component.editBar(this.path, options)
   }
 
   /**
@@ -331,18 +342,21 @@ export interface ContextBase {
 
 interface BarOpts {
   editMode?: boolean
+  label?: string
+  extraClass?: string
 }
 
 export interface EditBarOpts extends BarOpts {
-  label?: string | ((c: Component) => string)
-  extraClass?: string | ((c: Component) => string)
   inheritedFrom?: string
   disableDelete?: boolean
 }
 
+export interface RenderAreaEditBarOpts extends Omit<Omit<EditBarOpts, 'label'>, 'extraClass'> {
+  label?: string | ((c: Component) => string)
+  extraClass?: string | ((c: Component) => string)
+}
+
 export interface NewBarOpts extends BarOpts {
-  label?: string
-  extraClass?: string
   disabled?: boolean
 }
 

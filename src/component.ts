@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders } from 'http'
 import type { ParsedUrlQuery } from 'querystring'
-import { isNotBlank, omit } from 'txstate-utils'
+import { isNotBlank } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
@@ -125,11 +125,27 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     return Array.from(this.renderedAreas.values()).flatMap(ras => ras.map(ra => ra.output)).join('')
   }
 
-  // helper function to help you print an area, but you can also override this if you
-  // need to do something advanced like wrap each component in a div
-  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean }) {
+  /**
+   * helper function to print an area's component list, but you can also override this if you
+   * need to do something advanced like wrap each component in a div
+   */
+  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean, editBarOpts?: EditBarOpts }) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
-    return components.flatMap(c => c.component.inheritedFrom && opts?.hideInheritBars ? [c.output] : [c.component.editBar(), c.output]).join('')
+    return components.flatMap(c => c.component.inheritedFrom && opts?.hideInheritBars ? [c.output] : [c.component.editBar(opts?.editBarOpts), c.output]).join('')
+  }
+
+  /**
+   * helper function to print an area and set a minimum or maximum number of components
+   */
+  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, newBarOpts: NewBarOpts, editBarOpts: EditBarOpts }) {
+    const components = this.renderedAreas.get(areaName) ?? []
+    const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
+    let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0) } })
+    if (opts?.max && ownedComponentCount >= opts.max) {
+      if (!opts.hideMaxWarning) output += this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true })
+    } else {
+      output += this.newBar(areaName, opts?.newBarOpts)
+    }
   }
 
   /**
@@ -201,12 +217,11 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    *
    * Generally should not be overridden - override newLabel and newClass instead
    */
-  newBar (areaName: string, opts: EditBarOpts = {}) {
+  newBar (areaName: string, opts: NewBarOpts = {}) {
     opts.label ??= this.newLabel(areaName) ?? (this.areas.size > 1 ? `Add ${areaName} Content` : `Add ${this.autoLabel} Content`)
     opts.extraClass ??= this.newClass(areaName)
     opts.editMode ??= this.editMode
-    opts.inheritedFrom ??= this.inheritedFrom
-    return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts as EditBarOpts & { label: string })
+    return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts)
   }
 
   /**
@@ -214,7 +229,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * rendering process.
    */
   static editBar: (path: string, opts: EditBarOpts) => string
-  static newBar: (path: string, opts: EditBarOpts) => string
+  static newBar: (path: string, opts: NewBarOpts) => string
 
   // the constructor is part of the recursive hydration mechanism: constructing
   // a Component will also construct/hydrate all its child components
@@ -312,11 +327,21 @@ export interface ContextBase {
   headerLevel: number
 }
 
-export interface EditBarOpts {
-  extraClass?: string
-  label?: string
+interface BarOpts {
   editMode?: boolean
+}
+
+export interface EditBarOpts extends BarOpts {
+  label?: string | ((c: Component) => string)
+  extraClass?: string | ((c: Component) => string)
   inheritedFrom?: string
+  disableDelete?: boolean
+}
+
+export interface NewBarOpts extends BarOpts {
+  label?: string
+  extraClass?: string
+  disabled?: boolean
 }
 
 export interface RenderedComponent<C extends Component = Component> {

@@ -146,7 +146,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   /**
    * helper function to print an area and set a minimum or maximum number of components
    */
-  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, newBarOpts: NewBarOpts, editBarOpts: RenderAreaEditBarOpts }) {
+  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, newBarOpts?: NewBarOpts, editBarOpts?: RenderAreaEditBarOpts }) {
     const components = this.renderedAreas.get(areaName) ?? []
     const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
     let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0) } })
@@ -195,6 +195,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   editClass (): string | undefined { return undefined }
 
   /**
+   * Override with `true` to indicate that this template never accepts data from editors
+   *
+   * Its edit bar will not have a pencil icon.
+   */
+  noData = false
+
+  /**
    * Components may override this function to give their new bars a custom
    * label
    *
@@ -220,6 +227,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     options.extraClass ??= this.editClass()
     options.editMode ??= this.editMode
     options.inheritedFrom ??= this.inheritedFrom
+    options.hideEdit = this.noData || options.hideEdit
     return Component.editBar(this.path, options)
   }
 
@@ -350,6 +358,7 @@ interface BarOpts {
 export interface EditBarOpts extends BarOpts {
   inheritedFrom?: string
   disableDelete?: boolean
+  hideEdit?: boolean
 }
 
 export interface RenderAreaEditBarOpts extends Omit<Omit<EditBarOpts, 'label'>, 'extraClass'> {

@@ -314,7 +314,7 @@ export interface PageRecord<DataType extends PageData = PageData> {
   linkId: string
   createdAt: Date
   modifiedAt: Date
-  publishedAt: Date
+  publishedAt: Date | null
   path: string
   data: DataType
   site: SiteInfo

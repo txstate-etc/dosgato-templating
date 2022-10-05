@@ -1,4 +1,4 @@
-import { ComponentData } from './component'
+import { ComponentData } from './component.js'
 
 export interface SvelteComponent {
   $set: (props?: Record<string, any>) => void

@@ -149,8 +149,9 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, newBarOpts?: NewBarOpts, editBarOpts?: RenderAreaEditBarOpts }) {
     const components = this.renderedAreas.get(areaName) ?? []
     const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
-    let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0) } })
-    if (opts?.max && ownedComponentCount >= opts.max) {
+    const full = !!(opts?.max && ownedComponentCount >= opts.max)
+    let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
+    if (full) {
       if (!opts.hideMaxWarning) output += this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true })
     } else {
       output += this.newBar(areaName, opts?.newBarOpts)
@@ -237,10 +238,11 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Generally should not be overridden - override newLabel and newClass instead
    */
   newBar (areaName: string, opts: NewBarOpts = {}) {
-    opts.label ??= this.newLabel(areaName) ?? (this.areas.size > 1 ? `Add ${areaName} Content` : `Add ${this.autoLabel} Content`)
-    opts.extraClass ??= this.newClass(areaName)
-    opts.editMode ??= this.editMode
-    return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), opts)
+    const options = { ...opts }
+    options.label ??= this.newLabel(areaName) ?? (this.areas.size > 1 ? `Add ${areaName} Content` : `Add ${this.autoLabel} Content`)
+    options.extraClass ??= this.newClass(areaName)
+    options.editMode ??= this.editMode
+    return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), options)
   }
 
   /**
@@ -358,6 +360,7 @@ interface BarOpts {
 export interface EditBarOpts extends BarOpts {
   inheritedFrom?: string
   disableDelete?: boolean
+  disableDrop?: boolean
   hideEdit?: boolean
 }
 

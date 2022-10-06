@@ -46,7 +46,7 @@ export interface UITemplate {
    *   things like color pickers that visually match the colors of the current page template
    * - environmentConfig: base URLs in case you need to generate a link to the API or something
    */
-  dialog?: SvelteComponent
+  dialog?: new (...args: any[]) => SvelteComponent
 
   /**
    * Sometimes when you create a component that has areas, you want to automatically fill

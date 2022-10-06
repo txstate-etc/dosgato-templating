@@ -1,12 +1,5 @@
 import { ComponentData } from './component.js'
 
-export interface SvelteComponent {
-  $set: (props?: Record<string, any>) => void
-  $on: (event: string, callback: (event: any) => void) => () => void
-  $destroy: () => void
-  [accessor: string]: any
-}
-
 // extremely brief version of the IconifyIcon definition so we don't have to import
 // the whole library, may need to keep this in sync with @iconify/svelte (currently 3.0.0)
 interface IconifyIcon {
@@ -46,7 +39,7 @@ export interface UITemplate {
    *   things like color pickers that visually match the colors of the current page template
    * - environmentConfig: base URLs in case you need to generate a link to the API or something
    */
-  dialog?: new (...args: any[]) => SvelteComponent
+  dialog?: new (...args: any[]) => any
 
   /**
    * Sometimes when you create a component that has areas, you want to automatically fill

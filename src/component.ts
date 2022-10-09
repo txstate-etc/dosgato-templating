@@ -129,32 +129,42 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * helper function to print an area's component list, but you can also override this if you
    * need to do something advanced like wrap each component in a div
    */
-  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean, editBarOpts?: RenderAreaEditBarOpts }) {
+  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean, skipBars?: boolean, skipContent?: boolean, editBarOpts?: RenderAreaEditBarOpts }) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
+    if (opts?.skipBars) return components.map(c => c.output).join('')
     return components
       .flatMap(c =>
-        c.component.inheritedFrom &&
-        opts?.hideInheritBars
-          ? [c.output]
+        c.component.inheritedFrom && opts?.hideInheritBars
+          ? [opts.skipContent ? '' : c.output]
           : [c.component.editBar({
               ...opts?.editBarOpts,
               label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
               extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
-            }), c.output]).join('')
+            }), opts?.skipContent ? '' : c.output]).join('')
   }
 
   /**
    * helper function to print an area and set a minimum or maximum number of components
+   *
+   * In some cases you might be rendering the edit bars in a separate div instead of placing
+   * them above each component. For instance, a slider that only shows one slide at a time may
+   * prefer not to put bars with slides because that would mean only one bar is visible at a time
+   * and then there's no way to re-order slides.
+   *
+   * In that case you would call this.renderArea('areaname', { ..., skipEditBars: true }) first
+   * and then this.renderArea('areaname', { ..., skipContent: true }) in another place.
    */
-  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, newBarOpts?: NewBarOpts, editBarOpts?: RenderAreaEditBarOpts }) {
+  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, skipBars?: boolean, skipContent?: boolean, newBarOpts?: NewBarOpts, editBarOpts?: RenderAreaEditBarOpts }) {
     const components = this.renderedAreas.get(areaName) ?? []
     const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
     const full = !!(opts?.max && ownedComponentCount >= opts.max)
-    let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
-    if (full) {
-      if (!opts.hideMaxWarning) output += this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true })
-    } else {
-      output += this.newBar(areaName, opts?.newBarOpts)
+    let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, skipBars: opts?.skipBars, skipContent: opts?.skipContent, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
+    if (!opts?.skipBars) {
+      if (full) {
+        if (!opts.hideMaxWarning) output += this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true })
+      } else {
+        output += this.newBar(areaName, opts?.newBarOpts)
+      }
     }
     return output
   }
@@ -314,7 +324,7 @@ export interface PageRecord<DataType extends PageData = PageData> {
   linkId: string
   createdAt: Date
   modifiedAt: Date
-  publishedAt: Date | null
+  publishedAt?: Date
   path: string
   data: DataType
   site: SiteInfo

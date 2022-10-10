@@ -127,20 +127,20 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
 
   /**
    * helper function to print an area's component list, but you can also override this if you
-   * need to do something advanced like wrap each component in a div
+   * need to do something advanced
    */
-  renderComponents (components: RenderedComponent[] | string = [], opts?: { hideInheritBars?: boolean, skipBars?: boolean, skipContent?: boolean, editBarOpts?: RenderAreaEditBarOpts }) {
+  renderComponents (components: RenderedComponent[] | string = [], opts?: RenderComponentsOpts) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
-    if (opts?.skipBars) return components.map(c => c.output).join('')
+    if (opts?.skipBars) return components.map(c => opts.wrap?.(c) ?? c.output).join('')
     return components
       .flatMap(c =>
         c.component.inheritedFrom && opts?.hideInheritBars
-          ? [opts.skipContent ? '' : c.output]
+          ? [opts.skipContent ? '' : opts.wrap?.(c) ?? c.output]
           : [c.component.editBar({
               ...opts?.editBarOpts,
               label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
               extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
-            }), opts?.skipContent ? '' : c.output]).join('')
+            }), opts?.skipContent ? '' : opts?.wrap?.(c) ?? c.output]).join('')
   }
 
   /**
@@ -154,11 +154,11 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * In that case you would call this.renderArea('areaname', { ..., skipEditBars: true }) first
    * and then this.renderArea('areaname', { ..., skipContent: true }) in another place.
    */
-  renderArea (areaName: string, opts?: { min?: number, max?: number, hideMaxWarning?: boolean, maxWarning?: string, hideInheritBars?: boolean, skipBars?: boolean, skipContent?: boolean, newBarOpts?: NewBarOpts, editBarOpts?: RenderAreaEditBarOpts }) {
+  renderArea (areaName: string, opts?: RenderAreaOpts) {
     const components = this.renderedAreas.get(areaName) ?? []
     const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
     const full = !!(opts?.max && ownedComponentCount >= opts.max)
-    let output = this.renderComponents(components, { hideInheritBars: opts?.hideInheritBars, skipBars: opts?.skipBars, skipContent: opts?.skipContent, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
+    let output = this.renderComponents(components, { ...opts, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
     if (!opts?.skipBars) {
       if (full) {
         if (!opts.hideMaxWarning) output += this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true })
@@ -235,7 +235,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   editBar (opts: EditBarOpts = {}) {
     const options = { ...opts }
     options.label ??= this.editLabel() ?? this.autoLabel
-    options.extraClass ??= this.editClass()
+    options.extraClass = [options.extraClass, this.editClass()].filter(isNotBlank).join(' ')
     options.editMode ??= this.editMode
     options.inheritedFrom ??= this.inheritedFrom
     options.hideEdit = this.noData || options.hideEdit
@@ -250,7 +250,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   newBar (areaName: string, opts: NewBarOpts = {}) {
     const options = { ...opts }
     options.label ??= this.newLabel(areaName) ?? (this.areas.size > 1 ? `Add ${areaName} Content` : `Add ${this.autoLabel} Content`)
-    options.extraClass ??= this.newClass(areaName)
+    options.extraClass = [options.extraClass, this.newClass(areaName)].filter(isNotBlank).join(' ')
     options.editMode ??= this.editMode
     return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), options)
   }
@@ -375,12 +375,91 @@ export interface EditBarOpts extends BarOpts {
 }
 
 export interface RenderAreaEditBarOpts extends Omit<Omit<EditBarOpts, 'label'>, 'extraClass'> {
+  /**
+   * Since renderArea and renderComponents render a whole list of components,
+   * they accept functions for editBarOpts.label and editBarOpts.extraClass
+   *
+   * This way you can have labels and classes depend on the data of the component.
+   */
   label?: string | ((c: Component) => string)
+  /**
+   * Since renderArea and renderComponents render a whole list of components,
+   * they accept functions for editBarOpts.label and editBarOpts.extraClass
+   *
+   * This way you can have labels and classes depend on the data of the component.
+   */
   extraClass?: string | ((c: Component) => string)
 }
 
 export interface NewBarOpts extends BarOpts {
   disabled?: boolean
+}
+
+export interface RenderComponentsOpts {
+  /**
+   * Hide bars entiredly for inherited items instead of allowing the user
+   * to link back to the creating page. Useful for headers and footers where it's
+   * obvious the entire site shares the data from the root page.
+   */
+  hideInheritBars?: boolean
+  /**
+   * Do not print edit or new bars. Useful for components that have view-one-at-a-time
+   * subcomponents. If you don't move your editbars somewhere else, you'll be unable to
+   * re-order them easily.
+   */
+  skipBars?: boolean
+  /**
+   * Do not print the content, only print edit and new bars. This is the other half
+   * of skipBars. You'd print bars in one place and content in another.
+   */
+  skipContent?: boolean
+  /**
+   * Provide a function that wraps each component, e.g.
+   * (c: RenderedComponent) => `<li>${c.output}</li>`
+   */
+  wrap?: (c: RenderedComponent) => string
+  /**
+   * Options for each edit bar; also accepts functions for label and extraClass
+   */
+  editBarOpts?: RenderAreaEditBarOpts
+}
+
+export interface RenderAreaOpts extends RenderComponentsOpts {
+  /**
+   * Set a minimum number of components for the area.
+   *
+   * Enforcement of the minimum components is UI-only. It's possible for a
+   * page to be imported or updated via API with less than the minimum.
+   */
+  min?: number
+  /**
+   * Set a maximum number of components for the area.
+   *
+   * Enforcement of the maximum components is UI-only. It's possible for a
+   * page to be imported or updated via API with more than the maximum.
+   */
+  max?: number
+  /**
+   * Remove new bar when max is reached
+   *
+   * If you've set a max, the new bar will change to disabled and change its
+   * label when the max has been reached or exceeded. Set this true to completely
+   * remove the new bar instead.
+   */
+  hideMaxWarning?: boolean
+  /**
+   * Set the maximum reached warning label
+   *
+   * If you've set a max, the new bar will change to disabled and change its
+   * label when the max has been reached or exceeded. Set this to adjust the
+   * wording of the maximum reached warning, when applicable.
+   */
+  maxWarning?: string
+  /**
+   * Options to pass into the new bar. Note that some like 'disabled' will
+   * be overridden if you have set a max.
+   */
+  newBarOpts?: NewBarOpts
 }
 
 export interface RenderedComponent<C extends Component = Component> {

@@ -4,6 +4,8 @@ import { isNotBlank } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
+function defaultWrap (output: string) { return output }
+
 /**
  * This is the primary templating class to build your templates. Subclass it and provide
  * at least a render function.
@@ -131,16 +133,17 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   renderComponents (components: RenderedComponent[] | string = [], opts?: RenderComponentsOpts) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
-    if (opts?.skipBars) return components.map(c => opts.wrap?.(c) ?? c.output).join('')
+    const wrap = opts?.wrap ?? defaultWrap
+    if (opts?.skipBars) return components.map(c => wrap(c.output, c.component)).join('')
     return components
-      .flatMap(c =>
+      .map(c =>
         c.component.inheritedFrom && opts?.hideInheritBars
-          ? [opts.skipContent ? '' : opts.wrap?.(c) ?? c.output]
-          : [c.component.editBar({
-              ...opts?.editBarOpts,
-              label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
-              extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
-            }), opts?.skipContent ? '' : opts?.wrap?.(c) ?? c.output]).join('')
+          ? (opts.skipContent ? '' : wrap(c.output, c.component))
+          : wrap([c.component.editBar({
+            ...opts?.editBarOpts,
+            label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
+            extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
+          }), opts?.skipContent ? '' : c.output].join(''), c.component)).join('')
   }
 
   /**
@@ -415,9 +418,13 @@ export interface RenderComponentsOpts {
   skipContent?: boolean
   /**
    * Provide a function that wraps each component, e.g.
-   * (c: RenderedComponent) => `<li>${c.output}</li>`
+   * (output: string) => `<li>${output}</li>`
+   *
+   * Note that the wrap will also go around the edit bar.
+   *
+   * If you need it (unlikely), the full component object is provided as a second parameter.
    */
-  wrap?: (c: RenderedComponent) => string
+  wrap?: (output: string, c: Component) => string
   /**
    * Options for each edit bar; also accepts functions for label and extraClass
    */

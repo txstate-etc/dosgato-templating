@@ -161,12 +161,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     const components = this.renderedAreas.get(areaName) ?? []
     const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
     const full = !!(opts?.max && ownedComponentCount >= opts.max)
+    const wrap = opts?.wrap ?? defaultWrap
     let output = this.renderComponents(components, { ...opts, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
     if (!opts?.skipBars) {
       if (full) {
-        if (!opts.hideMaxWarning) output += this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true })
+        if (!opts.hideMaxWarning) output += wrap(this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true }))
       } else {
-        output += this.newBar(areaName, opts?.newBarOpts)
+        output += wrap(this.newBar(areaName, opts?.newBarOpts))
       }
     }
     return output
@@ -424,7 +425,7 @@ export interface RenderComponentsOpts {
    *
    * If you need it (unlikely), the full component object is provided as a second parameter.
    */
-  wrap?: (output: string, c: Component) => string
+  wrap?: (output: string, c?: Component) => string
   /**
    * Options for each edit bar; also accepts functions for label and extraClass
    */

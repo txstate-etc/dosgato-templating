@@ -4,7 +4,7 @@ import { isNotBlank } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
-function defaultWrap (output: string) { return output }
+function defaultWrap (info: RenderComponentsWrapParams) { return info.output }
 
 /**
  * This is the primary templating class to build your templates. Subclass it and provide
@@ -134,16 +134,20 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderComponents (components: RenderedComponent[] | string = [], opts?: RenderComponentsOpts) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
     const wrap = opts?.wrap ?? defaultWrap
-    if (opts?.skipBars) return components.map(c => wrap(c.output, c.component)).join('')
+    if (opts?.skipBars || opts?.skipEditBars) return components.map(c => wrap({ ...c, content: c.output, bar: '' })).join('')
     return components
-      .map(c =>
-        c.component.inheritedFrom && opts?.hideInheritBars
-          ? (opts.skipContent ? '' : wrap(c.output, c.component))
-          : wrap([c.component.editBar({
+      .map(c => {
+        if (c.component.inheritedFrom && opts?.hideInheritBars) {
+          return opts.skipContent ? '' : wrap({ ...c, content: c.output, bar: '' })
+        } else {
+          const bar = c.component.editBar({
             ...opts?.editBarOpts,
             label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
             extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
-          }), opts?.skipContent ? '' : c.output].join(''), c.component)).join('')
+          })
+          return wrap({ output: bar + c.output, content: c.output, bar, component: c.component })
+        }
+      }).join('')
   }
 
   /**
@@ -163,12 +167,16 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     const full = !!(opts?.max && ownedComponentCount >= opts.max)
     const wrap = opts?.wrap ?? defaultWrap
     let output = this.renderComponents(components, { ...opts, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
-    if (!opts?.skipBars) {
+    if (!opts?.skipBars && !opts?.skipNewBar) {
+      let bar: string | undefined
       if (full) {
-        if (!opts.hideMaxWarning) output += wrap(this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true }))
+        if (!opts.hideMaxWarning) {
+          bar = this.newBar(areaName, { ...opts.newBarOpts, label: opts.maxWarning ?? 'Maximum Reached', disabled: true })
+        }
       } else {
-        output += wrap(this.newBar(areaName, opts?.newBarOpts))
+        bar = this.newBar(areaName, opts?.newBarOpts)
       }
+      if (bar != null) output += wrap({ output: bar, content: '', bar })
     }
     return output
   }
@@ -399,6 +407,41 @@ export interface NewBarOpts extends BarOpts {
   disabled?: boolean
 }
 
+export interface RenderComponentsWrapParams {
+  /**
+   * Contains both the regular component content and the edit bar (or the new bar).
+   *
+   * Use this if you want to wrap content and edit bar together.
+   */
+  output: string
+  /**
+   * Contains only the regular component content and not the edit bar.
+   *
+   * If you use this, make sure to also use the bar parameter or else
+   * you'll never print the edit bar and your components will be uneditable.
+   */
+  content: string
+  /**
+   * Contains the edit bar or new bar, depending on the situation.
+   *
+   * Use this if you want to wrap the bar separately from the component content.
+   *
+   * Will be blank in edit mode or when skipBars was set to true on the renderArea
+   * and/or renderComponents call. You probably want to check if it's blank before
+   * wrapping or you'll end up with an empty wrapper element.
+   */
+  bar: string
+  /**
+   * Contains the full component being wrapped.
+   *
+   * Use this if you need to check the component's data to alter your
+   * wrapping behavior.
+   *
+   * Will be undefined for the new bar, so check that it is not null.
+   */
+  component?: Component
+}
+
 export interface RenderComponentsOpts {
   /**
    * Hide bars entiredly for inherited items instead of allowing the user
@@ -413,19 +456,36 @@ export interface RenderComponentsOpts {
    */
   skipBars?: boolean
   /**
+   * Only skip edit bars, but print the new bar normally.
+   *
+   * If skipBars is also true, the new bar will not print normally, obviously.
+   */
+  skipEditBars?: boolean
+  /**
+   * Only skip the new bar, but print the edit bars normally.
+   *
+   * If skipBars is also true, the edit bars will not print normally, obviously.
+   */
+  skipNewBar?: boolean
+  /**
    * Do not print the content, only print edit and new bars. This is the other half
    * of skipBars. You'd print bars in one place and content in another.
+   *
+   * If you only want to print the new bar, you need to set BOTH skipContent
+   * and skipEditBars.
    */
   skipContent?: boolean
   /**
    * Provide a function that wraps each component, e.g.
-   * (output: string) => `<li>${output}</li>`
+   * ({ output }) => `<li>${output}</li>`
    *
-   * Note that the wrap will also go around the edit bar.
+   * Wrap receives a lot of optional paramaters so that you can customize the behavior. For
+   * instance, you may want to wrap the content but not the edit bar, or vice versa. See
+   * the comments on each parameter for more info.
    *
    * If you need it (unlikely), the full component object is provided as a second parameter.
    */
-  wrap?: (output: string, c?: Component) => string
+  wrap?: (info: RenderComponentsWrapParams) => string
   /**
    * Options for each edit bar; also accepts functions for label and extraClass
    */

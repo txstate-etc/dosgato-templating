@@ -49,6 +49,26 @@ export interface PictureAttributes {
 
 export interface APIClient {
   /**
+   * Identify whether we are generating the page for live, preview, or editing
+   *
+   * Useful for things like google analytics where you only want to add it to live pages
+   * or else you'd be getting stats from editors and previewers.
+   */
+  context: 'live' | 'preview' | 'edit'
+
+  /**
+   * Identify whether we are generating the published version of a page or not.
+   *
+   * The methods provided below all take this into account. For instance, if you are
+   * generating the published view of a page and ask for its root page, you get
+   * the published version of the root page, not the latest unpublished version.
+   *
+   * If you make your own queries asking for other pages' data, you should make use
+   * of this variable to ensure you get the correct version of the data.
+   */
+  published: boolean
+
+  /**
    * Run any query against the API.
    *
    * Will be authenticated as appropriate - anonymous during published renders, as the editor

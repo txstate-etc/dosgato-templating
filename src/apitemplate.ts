@@ -35,8 +35,8 @@ export interface PageExtras {
   pageId?: string
   /** The path in the pagetree to the page, or what the path will be. NOTE: looking the page up by path will not work during page creation. */
   pagePath?: string
-  /** The linkId the page has or will have. NOTE: looking the page up by linkId will not work during page creation. */
-  linkId: string
+  /** The linkId the page has. Null during page creation. */
+  linkId?: string
   /** The name the page has or will have. NOTE: looking the page up by name will not work during page creation. */
   name: string
 }

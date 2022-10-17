@@ -47,6 +47,16 @@ export interface PictureAttributes {
   }[]
 }
 
+export interface PageForNavigation {
+  id: string
+  name: string
+  title: string
+  path: string
+  href: string
+  extra: Record<string, any>
+  children: this[]
+}
+
 export interface APIClient {
   /**
    * Identify whether we are generating the page for live, preview, or editing
@@ -123,6 +133,17 @@ export interface APIClient {
 
   /** Get the pagetree root page from which the specified page descends. */
   getRootPage: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord<PageData>>
+
+  /**
+   * Get a hierarchical tree of pages suitable for generating a navigation
+   * UI for your template.
+   *
+   * Returns the root page. Subpages are inside the `children` property.
+   *
+   * "extra" is a list of dot-separated paths to page data that you need to help you build
+   * your interface. For example, ['hideInNav'] would fill page.extra with { hideInNav: true }.
+   */
+  getNavigation: ({ depth, extra, filter }: { depth?: number, extra?: string[], filter?: (page: PageForNavigation) => boolean }) => Promise<PageForNavigation>
 
   /**
    * Get data entries by link or folder link

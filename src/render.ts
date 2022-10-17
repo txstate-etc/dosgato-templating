@@ -143,7 +143,7 @@ export interface APIClient {
    * "extra" is a list of dot-separated paths to page data that you need to help you build
    * your interface. For example, ['hideInNav'] would fill page.extra with { hideInNav: true }.
    */
-  getNavigation: ({ depth, extra, filter }: { depth?: number, extra?: string[], filter?: (page: PageForNavigation) => boolean }) => Promise<PageForNavigation>
+  getNavigation: ({ depth, extra, absolute }: { depth?: number, extra?: string[], absolute?: boolean }) => Promise<PageForNavigation>
 
   /**
    * Get data entries by link or folder link

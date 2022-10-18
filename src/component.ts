@@ -82,7 +82,38 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * The inherited components will be added to the appropriate area's array in the renderedAreas
    * parameter of your render function.
    */
-  registerInherited!: (area: string, components: ComponentData[], fromPageId: string, top?: true) => void
+  registerInherited!: (
+    /**
+     * The area in which to place the inherited components. It doesn't matter where you found them.
+     */
+    area: string,
+    /**
+     * An array of components to add to the area.
+     */
+    components: ComponentData[],
+    /**
+     * The page id of the page these components came from.
+     *
+     * If you are providing components from different pages, you may pass an array
+     * that corresponds index-for-index with the components array you provided.
+     *
+     * Generally you would only need to do this when you are using 'replace' mode, as with
+     * 'top' or 'bottom' you could just call registerInherited once per page you're
+     * inheriting from.
+     */
+    fromPageId: string | string[],
+    /**
+     * How to place the inherited components into the area.
+     *
+     * 'top' to place these inherited components at the top of the area.
+     * 'bottom' to place them at the bottom of the area.
+     * 'replace' to remove all existing components (inherited or not) in the area and
+     * use these instead.
+     *
+     * Default is 'top'.
+     */
+    mode?: 'top' | 'bottom' | 'replace'
+  ) => void
 
   /**
    * The second phase of rendering a component is the context phase. This step is TOP-DOWN and

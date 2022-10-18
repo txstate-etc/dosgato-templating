@@ -138,12 +138,45 @@ export interface APIClient {
    * Get a hierarchical tree of pages suitable for generating a navigation
    * UI for your template.
    *
-   * Returns the root page. Subpages are inside the `children` property.
-   *
-   * "extra" is a list of dot-separated paths to page data that you need to help you build
-   * your interface. For example, ['hideInNav'] would fill page.extra with { hideInNav: true }.
+   * Returns the root page(s). Subpages are inside the `children` property.
    */
-  getNavigation: ({ depth, extra, absolute }: { depth?: number, extra?: string[], absolute?: boolean }) => Promise<PageForNavigation>
+  getNavigation: ({ beneath, depth, extra, absolute }: {
+    /**
+     * Return pages beneath this path
+     *
+     * For instance, if you set this to '/site1' you will get back ['/site1/about',
+     * '/site1/history', '/site1/history/traditions', ...etc]
+     *
+     * If you do not set `beneath`, you will get back an array that contains only
+     * the root page of the pagetree you are in.
+     */
+    beneath?: string
+    /**
+     * Return pages to the given depth
+     *
+     * This is relative to `beneath`, so if `beneath` is '/site1' and `depth` is 0 you
+     * will get '/site1/history' and not '/site1/history/traditions'
+     *
+     * If you do not provide a `beneath`, `depth` 0 will get you the root page, 1 will get
+     * you the root page and one level of subpages, etc.
+     */
+    depth?: number
+    /**
+     * Get extra data from the page data
+     *
+     * Returning the full page data for a whole tree of pages would be an extreme amount of
+     * transfer, but if you need some of the data, you can specify an array of dot-separated
+     * paths to retrieve from it.
+     *
+     * For example, ['hideInNav'] would get you { extra: { hideInNav: tru } } in each returned
+     * page record.
+     */
+    extra?: string[]
+    /**
+     * The `href` property in the returned records should be an absolute URL.
+     */
+    absolute?: boolean
+  }) => Promise<PageForNavigation[]>
 
   /**
    * Get data entries by link or folder link

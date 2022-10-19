@@ -90,7 +90,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     /**
      * An array of components to add to the area.
      */
-    components: ComponentData[],
+    components: ComponentData[] | undefined,
     /**
      * The page id of the page these components came from.
      *

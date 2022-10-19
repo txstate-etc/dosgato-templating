@@ -140,7 +140,7 @@ export interface APIClient {
    *
    * Returns the root page(s). Subpages are inside the `children` property.
    */
-  getNavigation: ({ beneath, depth, extra, absolute }: {
+  getNavigation: (opts?: {
     /**
      * Return pages beneath this path
      *

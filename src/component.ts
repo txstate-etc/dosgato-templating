@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders } from 'http'
 import type { ParsedUrlQuery } from 'querystring'
-import { isNotBlank } from 'txstate-utils'
+import { get, isNotBlank } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
@@ -114,6 +114,23 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
      */
     mode?: 'top' | 'bottom' | 'replace'
   ) => void
+
+  /**
+   * Inherit components from another page with matching area
+   *
+   * This is a convenience function for when you are inheriting components from
+   * the exact same area on another page. It will not cover all inheritance use
+   * cases, but it covers enough that having this as a shorthand is helpful.
+   *
+   * Call it in your fetch() method just like you would with registerInherited.
+   *
+   * Note that you can still provide `mode` and you can provide a `filter` function
+   * to reduce the number of components that get inherited.
+   */
+  inheritArea <T extends ComponentData> (page: PageRecord, areaName: string, opts?: { mode?: 'top' | 'bottom' | 'replace', filter?: (c: T) => boolean }) {
+    const components = get(page.data, areaName).filter(opts?.filter ?? (() => true))
+    this.registerInherited(areaName, components, page.id, opts?.mode)
+  }
 
   /**
    * The second phase of rendering a component is the context phase. This step is TOP-DOWN and

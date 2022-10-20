@@ -47,6 +47,13 @@ export interface UITemplate {
    *
    * You can place that introductory content here and it will be automatically placed into
    * components with this template upon creation (and never again).
+   *
+   * Whatever you put here will be added beneath the component's `areas` property, so it would
+   * be structured like:
+   * {
+   *   someArea: [componentData1, componentData2],
+   *   anotherArea: [componentData3]
+   * }
    */
   defaultContent?: Record<string, ComponentData[]>
 

@@ -128,7 +128,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * to reduce the number of components that get inherited.
    */
   inheritArea <T extends ComponentData> (page: PageRecord, areaName: string, opts?: { mode?: 'top' | 'bottom' | 'replace', filter?: (c: T) => boolean }) {
-    const components = get(page.data, areaName).filter(opts?.filter ?? (() => true))
+    const components = get(page.data, `areas.${areaName}`).filter(opts?.filter ?? (() => true))
     this.registerInherited(areaName, components, page.id, opts?.mode)
   }
 
@@ -397,6 +397,7 @@ export interface PageRecordOptionalData<DataType extends PageData = PageData> ex
 export interface ComponentData {
   templateKey: string
   areas?: Record<string, ComponentData[]>
+  [keys: string]: any
 }
 
 export interface PageData extends ComponentData {
@@ -406,6 +407,7 @@ export interface PageData extends ComponentData {
 export interface DataData {
   templateKey: string
   savedAtVersion: string
+  [keys: string]: any
 }
 
 export interface ContextBase {

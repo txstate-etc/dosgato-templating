@@ -182,18 +182,18 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderComponents (components: RenderedComponent[] | string = [], opts?: RenderComponentsOpts) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
     const wrap = opts?.wrap ?? defaultWrap
-    if (opts?.skipBars || opts?.skipEditBars) return components.map(c => wrap({ ...c, content: c.output, bar: '' })).join('')
+    if (opts?.skipBars || opts?.skipEditBars) return components.map((c, indexInArea) => wrap({ ...c, content: c.output, bar: '', indexInArea })).join('')
     return components
-      .map(c => {
+      .map((c, indexInArea) => {
         if (c.component.inheritedFrom && opts?.hideInheritBars) {
-          return opts.skipContent ? '' : wrap({ ...c, content: c.output, bar: '' })
+          return opts.skipContent ? '' : wrap({ ...c, content: c.output, bar: '', indexInArea })
         } else {
           const bar = c.component.editBar({
             ...opts?.editBarOpts,
             label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
             extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
           })
-          return wrap({ output: bar + c.output, content: c.output, bar, component: c.component })
+          return wrap({ output: bar + c.output, content: c.output, bar, component: c.component, indexInArea })
         }
       }).join('')
   }
@@ -224,7 +224,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
       } else {
         bar = this.newBar(areaName, opts?.newBarOpts)
       }
-      if (bar != null) output += wrap({ output: bar, content: '', bar })
+      if (bar != null) output += wrap({ output: bar, content: '', bar, indexInArea: components.length })
     }
     return output
   }
@@ -352,6 +352,10 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   autoLabel!: string // the rendering server will fetch template names and fill this
   reqHeaders!: IncomingHttpHeaders // the HTTP headers of the request being processed, in case it would change the render
   reqQuery!: ParsedUrlQuery // the URL of the request being processed, so you can access the query or do routing work
+  // the index of this component in its area, after inheritance has occurred
+  // undefined for page templates but I'm intentionally making it non-optional
+  // because it would be non-sensical to try to use in a page template anyway
+  indexInArea!: number
 
   /**
    * For logging errors during rendering without crashing the render. If your fetch, setContext,
@@ -481,6 +485,12 @@ export interface RenderComponentsWrapParams {
    * wrapping or you'll end up with an empty wrapper element.
    */
   bar: string
+  /**
+   * The index of the component currently being wrapped
+   *
+   * After pulling in any inherited components.
+   */
+  indexInArea: number
   /**
    * Contains the full component being wrapped.
    *

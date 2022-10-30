@@ -353,7 +353,8 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   reqHeaders!: IncomingHttpHeaders // the HTTP headers of the request being processed, in case it would change the render
   reqQuery!: ParsedUrlQuery // the URL of the request being processed, so you can access the query or do routing work
   // the index of this component in its area, after inheritance has occurred
-  // undefined for page templates but I'm intentionally making it non-optional
+  // because we are waiting for inheritance, this will be undefined until the render phase
+  // it's also undefined for page templates but I'm intentionally making it non-optional
   // because it would be non-sensical to try to use in a page template anyway
   indexInArea!: number
 

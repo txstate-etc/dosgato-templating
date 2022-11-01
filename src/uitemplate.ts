@@ -36,10 +36,15 @@ export interface UITemplate {
    * - data: ComponentData, the current data on the page, should not be mutated during editing,
    *   undefined when creating
    * - page: DialogPageProp, the current page so that you can reference the full page data or
-   *   make a further graphql query based on its id/path.
+   *   make a further graphql query based on its id/path. Component dialogs only, page and data
+   *   dialogs do not receive this prop
    * - templateProperties: the template properties for the current page template, so you can make
-   *   things like color pickers that visually match the colors of the current page template
+   *   things like color pickers that visually match the colors of the current page template.
+   *   Data dialogs do not receive this.
    * - environmentConfig: base URLs in case you need to generate a link to the API or something
+   *
+   * In addition to the props, you may import the `dialogQuery` function (see below) to send
+   * requests to the API.
    */
   dialog?: new (...args: any[]) => any
 
@@ -77,7 +82,7 @@ export interface UITemplate {
 
 /**
  * This is a type for the data that will be passed to dialog Svelte components as
- * the `page` prop.
+ * the `page` prop. Note that page template dialogs do NOT receive this prop.
  */
 export interface DialogPageProp {
   id: string

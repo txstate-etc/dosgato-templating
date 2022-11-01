@@ -1,16 +1,17 @@
-import { isBlank } from 'txstate-utils'
+import { htmlEncode, isBlank } from 'txstate-utils'
 import { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
 import { AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
-export function printHeader (ctx: ContextBase, content: string) {
+export function printHeader (ctx: ContextBase, content: string | undefined | null, attributes?: Record<string, string>) {
   if (isBlank(content)) return ''
   const level = (ctx.headerLevel ?? 0) + 1
-  if (level < 1) return `<h1>${content}</h1>`
-  if (level > 6) return `<h6>${content}</h6>`
-  return `<h${level}>${content}</h${level}>`
+  const attr = attributes ? ' ' + Object.entries(attributes).map(([key, val]) => `${key}="${htmlEncode(val)}"`).join(' ') : ''
+  if (level < 1) return `<h1${attr}>${content}</h1>`
+  if (level > 6) return `<h6${attr}>${content}</h6>`
+  return `<h${level}${attr}>${content}</h${level}>`
 }
 
-export function advanceHeader (ctx: ContextBase, content?: string) {
+export function advanceHeader (ctx: ContextBase, content: string | undefined | null) {
   const ret = { ...ctx }
   if (!isBlank(content)) ret.headerLevel = (ret.headerLevel ?? 0) + 1
   return ret

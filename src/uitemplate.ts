@@ -1,4 +1,4 @@
-import { ComponentData } from './component.js'
+import { ComponentData, PageData } from './component.js'
 
 // extremely brief version of the IconifyIcon definition so we don't have to import
 // the whole library, may need to keep this in sync with @iconify/svelte (currently 3.0.0)
@@ -35,6 +35,8 @@ export interface UITemplate {
    * - creating: boolean, true when creating component for the first time, false when editing
    * - data: ComponentData, the current data on the page, should not be mutated during editing,
    *   undefined when creating
+   * - page: DialogPageProp, the current page so that you can reference the full page data or
+   *   make a further graphql query based on its id/path.
    * - templateProperties: the template properties for the current page template, so you can make
    *   things like color pickers that visually match the colors of the current page template
    * - environmentConfig: base URLs in case you need to generate a link to the API or something
@@ -71,4 +73,22 @@ export interface UITemplate {
    * preview image.
    */
   icon?: IconOrSVG
+}
+
+/**
+ * This is a type for the data that will be passed to dialog Svelte components as
+ * the `page` prop.
+ */
+export interface DialogPageProp {
+  id: string
+  path: string
+  data: PageData
+}
+
+/**
+ * A function you may use in your dialogs to make an authenticated graphql request to the DosGato
+ * API.
+ */
+export async function dialogQuery <T = any> (query: string, variables: any) {
+  return await ((window as any).api.query(query, variables) as Promise<T>)
 }

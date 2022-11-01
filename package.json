@@ -1,6 +1,6 @@
 {
   "name": "@dosgato/templating",
-  "version": "0.0.83",
+  "version": "0.0.84",
   "description": "A library to support building templates for dosgato CMS.",
   "type": "module",
   "exports": {

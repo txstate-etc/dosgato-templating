@@ -1,20 +1,19 @@
-import { htmlEncode, isBlank } from 'txstate-utils'
+import { htmlEncode, isBlank, isNotEmpty } from 'txstate-utils'
 import { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
 import { AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 export function printHeader (ctx: ContextBase, content: string | undefined | null, attributes?: Record<string, string>) {
   if (isBlank(content)) return ''
   const level = (ctx.headerLevel ?? 0) + 1
-  const attr = attributes ? ' ' + Object.entries(attributes).map(([key, val]) => `${key}="${htmlEncode(val)}"`).join(' ') : ''
+  const attr = isNotEmpty(attributes) ? ' ' + Object.entries(attributes).map(([key, val]) => `${key}="${htmlEncode(val)}"`).join(' ') : ''
   if (level < 1) return `<h1${attr}>${content}</h1>`
   if (level > 6) return `<h6${attr}>${content}</h6>`
   return `<h${level}${attr}>${content}</h${level}>`
 }
 
-export function advanceHeader (ctx: ContextBase, content: string | undefined | null) {
-  const ret = { ...ctx }
-  if (!isBlank(content)) ret.headerLevel = (ret.headerLevel ?? 0) + 1
-  return ret
+export function advanceHeader <T extends ContextBase> (ctx: T, content: string | undefined | null) {
+  if (!isBlank(content)) ctx.headerLevel = (ctx.headerLevel ?? 0) + 1
+  return ctx
 }
 
 export interface PictureResize {
@@ -102,14 +101,6 @@ export interface APIClient {
    * like an RSS feed.
    */
   getHref: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => string
-
-  /**
-   * This function will be provided by the rendering server and should be used inside your fetch
-   * method to prepare editor-provided HTML for rendering. It will do things like find and resolve
-   * link definitions in the internal dosgato format and clean up tags that were accidentally left
-   * open to protect overall page integrity.
-   */
-  processRich: (text: string) => Promise<string>
 
   /**
    * This function will retrieve information about an image to help you construct responsive HTML

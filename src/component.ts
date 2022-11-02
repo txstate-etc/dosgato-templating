@@ -133,23 +133,48 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   }
 
   /**
-   * The second phase of rendering a component is the context phase. This step is TOP-DOWN and
-   * NON-MUTATING. Each component will receive the parent component's context and then pass a
-   * NEW context object to its children.
+   * The second phase of rendering a component is the context phase. This step is TOP-DOWN.
+   * Each component will receive context from the parent component and then pass a new context
+   * object to its own children.
    *
    * This is useful for rendering logic that is sensitive to where the component exists in
    * the hierarchy of the page. For instance, if a parent component has used an h2 header
    * already, it will want to inform its children so that they can use h3 next, and they inform
    * their children that h4 is next, and so on. (Header level tracking is supported by default in
-   * dosgato CMS.)
+   * dosgato CMS - see printHeader() and advanceHeader())
    *
    * This function may return a promise in case you need to do something asynchronous based on
    * the context received from the parent, but use it sparingly since it will stall the process.
    * Try to do all asynchronous work in the fetch phase.
    */
-  setContext (renderCtxFromParent: RenderContextType): RenderContextType | Promise<RenderContextType> {
+  setContext (renderCtxFromParent: RenderContextType, areaName: string): RenderContextType | Promise<RenderContextType> {
     return renderCtxFromParent
   }
+
+  /**
+   * This function will be provided by the rendering server and should be used inside your fetch
+   * method to prepare editor-provided HTML for later rendering. It will do things like find and
+   * resolve link definitions in the internal dosgato format.
+   */
+  fetchRichText!: (text: string) => Promise<void>
+
+  /**
+   * This function will be provided by the rendering server and should be used during the render
+   * phase to clean up editor-provided HTML. It will do things like clean up tags that were accidentally
+   * left open to protect overall page integrity, and fix header levels for accessibility.
+   *
+   * For instance, an editor supplies a title to be placed above some rich editor content. The
+   * title uses an <h2>, so the headers inside the rich editor content should start at <h3> and
+   * should not use <h1> or <h2>.
+   *
+   * Setting headerLevel: 3 instructs the renderRichText function to analyze and rebalance the header
+   * structure of the content so that if it had an h2, it woud be replaced with an h3. Additionally,
+   * if the user skipped a header level (a WCAG violation) that situation will be repaired as well
+   * as possible.
+   *
+   * If you do not provide a headerLevel, the one from `this.renderCtx` will be used.
+   */
+  renderRichText!: (html: string, opts?: { headerLevel?: number }) => string
 
   /**
    * The final phase of rendering a component is the render phase. This step is BOTTOM-UP -

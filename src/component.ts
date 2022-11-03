@@ -182,7 +182,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * If this.data.title is non-blank, the rich text will be balanced below it, but if it is blank,
    * it will be balanced at the level the title would have had.
    */
-  renderRichText!: (html: string, opts?: { headerLevel?: number, advanceHeader?: string | undefined | null }) => string
+  renderRichText!: (html: string, opts?: { headerLevel?: number, advanceHeader?: string }) => string
 
   /**
    * The final phase of rendering a component is the render phase. This step is BOTTOM-UP -
@@ -630,7 +630,7 @@ export interface RenderedComponent<C extends Component = Component> {
   output: string
 }
 
-export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends Component<DataType, FetchedType, RenderContextType> {
+export abstract class Page<DataType extends PageData = any, FetchedType = any, RenderContextType extends ContextBase = ContextBase> extends Component<DataType, FetchedType, RenderContextType> {
   /**
    * The page id in case you need to pass it to the API, e.g. this.api.getRootPage(this.id)
    * in a page template or this.api.getRootPage(this.page.id) in a component template.

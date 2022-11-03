@@ -4,7 +4,7 @@ import { AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from '.
 
 export function printHeader (ctx: ContextBase, content: string | undefined | null, attributes?: Record<string, string>) {
   if (isBlank(content)) return ''
-  const level = (ctx.headerLevel ?? 0) + 1
+  const level = ctx.headerLevel ?? 1
   const attr = isNotEmpty(attributes) ? ' ' + Object.entries(attributes).map(([key, val]) => `${key}="${htmlEncode(val)}"`).join(' ') : ''
   if (level < 1) return `<h1${attr}>${content}</h1>`
   if (level > 6) return `<h6${attr}>${content}</h6>`
@@ -12,7 +12,7 @@ export function printHeader (ctx: ContextBase, content: string | undefined | nul
 }
 
 export function advanceHeader <T extends ContextBase> (ctx: T, content: string | undefined | null) {
-  if (!isBlank(content)) ctx.headerLevel = (ctx.headerLevel ?? 0) + 1
+  if (!isBlank(content)) ctx.headerLevel = (ctx.headerLevel ?? 1) + 1
   return ctx
 }
 

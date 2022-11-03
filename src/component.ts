@@ -13,7 +13,7 @@ function defaultWrap (info: RenderComponentsWrapParams) { return info.output }
  * During rendering, it will be "hydrated" - placed into a full page structure with its
  * parent and child components linked.
  */
-export abstract class Component<DataType extends ComponentData = any, FetchedType = any, RenderContextType extends ContextBase = any> extends ResourceProvider {
+export abstract class Component<DataType extends ComponentData = any, FetchedType = any, RenderContextType extends ContextBase = ContextBase> extends ResourceProvider {
   /**
    * Provide this when you create a template to identify what you are defining.
    */
@@ -172,9 +172,17 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * if the user skipped a header level (a WCAG violation) that situation will be repaired as well
    * as possible.
    *
-   * If you do not provide a headerLevel, the one from `this.renderCtx` will be used.
+   * If you do not provide a headerLevel, the one from `this.renderCtx` will be used. However, if you
+   * provide a non-blank value for `advanceHeader`, the headerLevel from `this.renderCtx` + 1 will be used.
+   *
+   * This way you can easily render a piece of rich text in a component that has an optional title:
+   *
+   * this.renderRichText(this.data.richtext, { advanceHeader: this.data.title })
+   *
+   * If this.data.title is non-blank, the rich text will be balanced below it, but if it is blank,
+   * it will be balanced at the level the title would have had.
    */
-  renderRichText!: (html: string, opts?: { headerLevel?: number }) => string
+  renderRichText!: (html: string, opts?: { headerLevel?: number, advanceHeader?: string | undefined | null }) => string
 
   /**
    * The final phase of rendering a component is the render phase. This step is BOTTOM-UP -
@@ -451,6 +459,7 @@ export interface ContextBase {
    * This way every page will have a perfect header tree and avoid complaints from WAVE.
    */
   headerLevel: number
+  [keys: string]: any
 }
 
 interface BarOpts {

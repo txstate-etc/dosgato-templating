@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders } from 'http'
 import type { ParsedUrlQuery } from 'querystring'
-import { get, isNotBlank } from 'txstate-utils'
+import { get, isNotBlank, titleCase } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
@@ -419,6 +419,7 @@ export interface SiteInfo {
 
 export interface PageRecord<DataType extends PageData = PageData> {
   id: string
+  name: string
   linkId: string
   createdAt: Date
   modifiedAt: Date
@@ -641,6 +642,15 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
    * Other data we've already collected about the page being rendered, in case it's needed.
    */
   pageInfo: PageRecord<DataType>
+
+  /**
+   * A convenience to get the page title.
+   *
+   * If the user didn't set a title, it manipulates the page name into a title.
+   */
+  get title () {
+    return this.pageInfo.data.title ?? titleCase(this.pageInfo.name)
+  }
 
   /**
    * This will be filled by the rendering server. The template properties are described

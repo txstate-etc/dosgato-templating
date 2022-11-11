@@ -19,6 +19,22 @@ export interface CSSBlock {
    */
   sass?: boolean
   /**
+   * This CSS is intended to alter edit/new bar styles.
+   *
+   * Edit, Inherit, and New bars use web components with shadow DOM to ensure none of your
+   * templates' page styles leak in and alter them. This is good, but it means you cannot
+   * alter edit bars with page template CSS.
+   *
+   * Set this flag true and depend on the CSS block in your Component.cssBlocks() method as
+   * normal. This block will automatically be included inside the shadow DOM of each bar, instead
+   * of being included in the page's head.
+   *
+   * Note that this CSS will be present in all edit bars, not just the ones that have it in their
+   * Component.cssBlocks() method. Use the `extraClass` option when generating bars to help you
+   * target something specific.
+   */
+  targetsEditBars?: boolean
+  /**
    * A version string following SEMVER. If multiple blocks are provided with the same name,
    * the one with the highest version number will be chosen. If blocks of different major
    * versions are provided, an alert will appear in the log.

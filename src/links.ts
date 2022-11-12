@@ -6,7 +6,8 @@
 export interface AssetLink {
   type: 'asset'
   source: string
-  id: string // the asset's dataId
+  id: string // the asset's dataId, or unique id from non-DosGato source
+  siteId?: string // any of these last three properties could be undefined in a non-DosGato source
   path?: string
   checksum?: string
 }
@@ -20,6 +21,7 @@ export interface AssetFolderLink {
   type: 'assetfolder'
   source: string
   id: string // the asset folder's guid
+  siteId?: string // may be undefined for non-DosGato source
   path: string
 }
 

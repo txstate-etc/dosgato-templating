@@ -226,7 +226,8 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
             label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
             extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
           })
-          return wrap({ output: bar + c.output, content: c.output, bar, component: c.component, indexInArea })
+          const content = opts?.skipContent ? '' : c.output
+          return wrap({ output: bar + content, content, bar, component: c.component, indexInArea })
         }
       }).join('')
   }
@@ -509,6 +510,10 @@ export interface RenderComponentsWrapParams {
    *
    * If you use this, make sure to also use the bar parameter or else
    * you'll never print the edit bar and your components will be uneditable.
+   *
+   * This will be an empty string for new bars and when being rendered with skipContent
+   * set to true. If you need to determine whether you're wrapping a new bar,
+   * check component == null instead of checking this.
    */
   content: string
   /**
@@ -516,9 +521,9 @@ export interface RenderComponentsWrapParams {
    *
    * Use this if you want to wrap the bar separately from the component content.
    *
-   * Will be blank in edit mode or when skipBars was set to true on the renderArea
-   * and/or renderComponents call. You probably want to check if it's blank before
-   * wrapping or you'll end up with an empty wrapper element.
+   * Will be empty string when not in edit mode or when skipBars was set to true on
+   * the renderArea and/or renderComponents call. You probably want to check if it's
+   * blank before wrapping or you'll end up with an empty wrapper element.
    */
   bar: string
   /**

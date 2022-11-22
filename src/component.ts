@@ -156,7 +156,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * method to prepare editor-provided HTML for later rendering. It will do things like find and
    * resolve link definitions in the internal dosgato format.
    */
-  fetchRichText!: (text: string) => Promise<void>
+  fetchRichText!: (html: string | undefined) => Promise<void>
 
   /**
    * This function will be provided by the rendering server and should be used during the render
@@ -182,7 +182,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * If this.data.title is non-blank, the rich text will be balanced below it, but if it is blank,
    * it will be balanced at the level the title would have had.
    */
-  renderRichText!: (html: string, opts?: { headerLevel?: number, advanceHeader?: string }) => string
+  renderRichText!: (html: string | undefined, opts?: { headerLevel?: number, advanceHeader?: string }) => string
 
   /**
    * The final phase of rendering a component is the render phase. This step is BOTTOM-UP -

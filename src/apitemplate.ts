@@ -209,8 +209,8 @@ export type PageMigration<DataType extends PageData = PageData> = Migration<Data
 export type DataMigration<DataType extends DataData = DataData> = Migration<DataType, DataExtras>
 export type AnyMigration = ComponentMigration | PageMigration | DataMigration
 
-export type LinkGatheringFn<DataType> = (data: DataType) => LinkDefinition[]
-export type FulltextGatheringFn<DataType> = (data: DataType) => string[]
+export type LinkGatheringFn<DataType> = (data: DataType) => (LinkDefinition | string | undefined)[]
+export type FulltextGatheringFn<DataType> = (data: DataType) => (string | undefined)[]
 export type GraphQLQueryFn = <T> (query: string, variables?: any) => Promise<T>
 
 /**

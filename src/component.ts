@@ -712,6 +712,26 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
    */
   addHeader!: (key: string, value: string | undefined) => void
 
+  /**
+   * URL for the currently rendering page
+   *
+   * The URL currently being rendered. For instance, if we are in edit mode it would begin
+   * with /.edit/ or in preview mode, /.preview/. Useful for referencing variations of the
+   * current page.
+   *
+   * Does not include hash or querystring.
+   *
+   * Also see `variationUrl` below.
+   */
+  url!: string
+
+  /**
+   * Get a URL for the current page with a different extension
+   */
+  variationUrl (extension: string) {
+    return `${this.url.replace(/\.\w+$/, '')}.${extension}`
+  }
+
   protected passError (e: Error, path: string) {
     console.warn(`Recoverable issue occured during render of ${this.pageInfo.path}. Component at ${path} threw the following error:`, e)
   }

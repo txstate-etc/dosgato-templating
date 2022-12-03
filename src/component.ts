@@ -5,7 +5,7 @@ import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
 function defaultWrap (info: RenderComponentsWrapParams) { return info.output }
-
+const acceptHtmlVariation = { html: true }
 /**
  * This is the primary templating class to build your templates. Subclass it and provide
  * at least a render function.
@@ -92,14 +92,14 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * going to render anything. For instance, if we are rendering an '.ics' variation and this component
    * is not an event, it will not be participating and we'd like to avoid doing the work in the fetch().
    *
-   * This method returns an array of extensions where we SHOULD run fetch(). The default is only run fetch
+   * This method returns a map of extensions where we SHOULD run fetch(). The default is only run fetch
    * on 'html'. Components that support other variations should override this method and opt in to more
    * extensions.
    *
    * The extensions listed should NOT include the preceding dot. In the case of an extended extension like
    * '.js.map', you should provide 'js.map'.
    */
-  variationsToFetch () { return ['html'] }
+  variationsToFetch () { return acceptHtmlVariation }
 
   /**
    * Some components may be inheritable to subpages within the same site. For instance, a site's

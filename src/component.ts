@@ -38,6 +38,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   editMode: boolean
 
   /**
+   * The extension of the variation currently being rendered.
+   *
+   * See 'renderVariation' and 'variationsToFetch' for more discussion of variations.
+   */
+  extension: string
+
+  /**
    * When hydrating an inherited component, the renderer will set this to the id of the page it
    * came from. You may use this information in any of the phases to alter your behavior if needed.
    *
@@ -67,10 +74,32 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Try to minimize the number of round trips you make here, make use of Promise.all and such;
    * remember that the api functions are mostly dataloaded so calling them simultaneously is
    * advantageous where possible.
+   *
+   * fetch() may be run while rendering a non-HTML variation of a page. If you need to do different
+   * work in those cases, remember this.extension is available.
    */
   async fetch (): Promise<FetchedType> {
     return undefined as unknown as FetchedType
   }
+
+  /**
+   * Only run fetch for specific variations.
+   *
+   * Sometimes pages are requested with an alternate extension like .rss or .ics. See 'renderVariation'
+   * method for more discussion on this.
+   *
+   * When rendering variations, many components will not need to fetch anything, because they are not
+   * going to render anything. For instance, if we are rendering an '.ics' variation and this component
+   * is not an event, it will not be participating and we'd like to avoid doing the work in the fetch().
+   *
+   * This variable is an array of extensions where we SHOULD run fetch(). The default is only run fetch
+   * on 'html'. Components that support other variations should override this method and opt in to more
+   * extensions.
+   *
+   * The extensions listed should NOT include the preceding dot. In the case of an extended extension like
+   * '.js.map', you should provide 'js.map'.
+   */
+  static variationsToFetch = ['html']
 
   /**
    * Some components may be inheritable to subpages within the same site. For instance, a site's
@@ -200,6 +229,9 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * super.renderVariation(extension, renderedAreas) to give your child components a chance to
    * respond, or return empty string if you want your child components to be silent in all
    * cases.
+   *
+   * The extension will NOT include the preceding dot. In the case of an extended extension like
+   * '.js.map', you will receive 'js.map'.
    *
    * This function will be run after the fetch phase. The context and html rendering phases
    * will be skipped.
@@ -358,9 +390,10 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
 
   // the constructor is part of the recursive hydration mechanism: constructing
   // a Component will also construct/hydrate all its child components
-  constructor (data: DataType, path: string, parent: Component | undefined, editMode: boolean) {
+  constructor (data: DataType, path: string, parent: Component | undefined, editMode: boolean, extension: string) {
     super()
     this.editMode = editMode
+    this.extension = extension
     this.parent = parent
     const { areas, ...ownData } = data
     this.data = ownData
@@ -684,8 +717,8 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
     console.warn(`Recoverable issue occured during render of ${this.pageInfo.path}. Component at ${path} threw the following error:`, e)
   }
 
-  constructor (page: PageRecord<DataType>, editMode: boolean) {
-    super(page.data, '', undefined, editMode)
+  constructor (page: PageRecord<DataType>, editMode: boolean, extension: string) {
+    super(page.data, '', undefined, editMode, extension)
     this.id = page.id
     this.pageInfo = page
   }

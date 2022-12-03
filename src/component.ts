@@ -92,14 +92,14 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * going to render anything. For instance, if we are rendering an '.ics' variation and this component
    * is not an event, it will not be participating and we'd like to avoid doing the work in the fetch().
    *
-   * This variable is an array of extensions where we SHOULD run fetch(). The default is only run fetch
+   * This method returns an array of extensions where we SHOULD run fetch(). The default is only run fetch
    * on 'html'. Components that support other variations should override this method and opt in to more
    * extensions.
    *
    * The extensions listed should NOT include the preceding dot. In the case of an extended extension like
    * '.js.map', you should provide 'js.map'.
    */
-  static variationsToFetch = ['html']
+  variationsToFetch () { return ['html'] }
 
   /**
    * Some components may be inheritable to subpages within the same site. For instance, a site's

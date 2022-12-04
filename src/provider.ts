@@ -84,6 +84,21 @@ export interface JSBlock {
    * (unless their dependents are smart enough to wait for the global to be defined).
    */
   async?: boolean
+  /**
+   * Do not treat this script like a module
+   *
+   * By default we set the `type="module"` attribute on script tags. Mostly what this will do is ensure
+   * your top-level variables don't accidentally pollute the global scope. You would need to do
+   * `window.myVar =` instead of `const myVar =`.
+   *
+   * If your script is full of intentional globals and you don't want to refactor it, you can set
+   * this to false.
+   *
+   * This is also useful for frameworks like jQuery or prototype to ensure that they are executed
+   * immediately instead of just before DOMContentLoaded. jQuery in particular behaves poorly when
+   * you combine `type="module"` or `defer` with jQuery(document).ready().
+   */
+  nomodule?: boolean
 }
 
 export interface FileDeclaration {

@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders } from 'http'
 import type { ParsedUrlQuery } from 'querystring'
-import { get, isNotBlank, titleCase } from 'txstate-utils'
+import { get, isNotBlank, printIf, titleCase } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
 import { APIClient } from './render.js'
 
@@ -729,7 +729,7 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
    * Get a URL for the current page with a different extension
    */
   variationUrl (extension: string) {
-    return `${this.url.replace(/\.\w+$/, '')}.${extension}`
+    return `${this.url.replace(/\.\w+$/, '')}.${extension}${printIf(this.url.startsWith('/.edit/'), `?token=${this.reqQuery.token as string ?? ''}`)}`
   }
 
   protected passError (e: Error, path: string) {

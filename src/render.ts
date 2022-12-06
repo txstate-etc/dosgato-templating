@@ -112,7 +112,7 @@ export interface APIClient {
    *
    * Will be dataloaded.
    */
-  getImgAttributes: (link: string | AssetLink, absolute?: boolean) => Promise<PictureAttributes>
+  getImgAttributes: (link: string | AssetLink | undefined, absolute?: boolean) => Promise<PictureAttributes | undefined>
 
   /** Get the data for a specific page.
    *

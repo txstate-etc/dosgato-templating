@@ -91,7 +91,7 @@ export interface APIClient {
    * method to convert a link, as input by a user, into a URL suitable for an href, or optionally
    * an absolute URL suitable for a backend http request or non-HTML document like an RSS feed.
    */
-  resolveLink: (lnk: string | LinkDefinition, opts?: { absolute?: boolean, extension?: string }) => Promise<string>
+  resolveLink: (lnk: string | LinkDefinition | undefined, opts?: { absolute?: boolean, extension?: string }) => Promise<string | undefined>
 
   /**
    * Get a link href for a page

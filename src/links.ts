@@ -100,7 +100,6 @@ export function extractLinksFromText (text: string | undefined) {
  * This function is used by render definitions to replace links in large blocks with the actual
  * URLs they point to at render time.
  */
-export function replaceLinksInText (text: string, resolved: Map<string, string>) {
-  // TODO: figure out a broken link to use instead of '#', so it can be detected later
-  return text.replace(LinkRegex, m => resolved.get(m) ?? '#')
+export function replaceLinksInText (text: string, resolved: Map<string, string | undefined>) {
+  return text.replace(LinkRegex, m => resolved.get(m) ?? 'dg-broken-link')
 }

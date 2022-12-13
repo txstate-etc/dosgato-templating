@@ -99,8 +99,12 @@ export interface APIClient {
    * By default this will generate relative links based on the page currently being rendered. Set
    * absolute: true to generate a full URL suitable for a backend http request or non-HTML document
    * like an RSS feed.
+   *
+   * Will be undefined for cross-site links to pages without launch info, since the resulting link would be
+   * broken, but if a site has launch info that is simply disabled, getHref will still work. Any links generated
+   * would work as soon as the launch info is enabled.
    */
-  getHref: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => string
+  getHref: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => string | undefined
 
   /**
    * This function will retrieve information about an image to help you construct responsive HTML

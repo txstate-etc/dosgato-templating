@@ -49,6 +49,21 @@ export interface UITemplate {
   dialog?: new (...args: any[]) => any
 
   /**
+   * Sometimes it's useful for a component to have a stable but random identifier for use
+   * during render. For instance, to set the id on an HTML element for reference by other
+   * components or code.
+   *
+   * If your component has a dialog, dosgato-dialog has a <FieldIdentifier> component for this;
+   * it's invisible but either creates or maintains a random string.
+   *
+   * If your component has no dialog but still needs an identifier, you can name a property
+   * here and dosgato-admin will generate one for you upon creation.
+   *
+   * For example, `randomId: 'id'` means your component data will look like `{ id: 'cym87regpk' }`
+   */
+  randomId?: string
+
+  /**
    * Sometimes when you create a component that has areas, you want to automatically fill
    * one or more areas with some default introductory content.
    *

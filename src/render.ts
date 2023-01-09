@@ -53,6 +53,7 @@ export interface PageForNavigation {
   title: string
   path: string
   href: string
+  publishedAt?: Date
   extra: Record<string, any>
   children: this[]
 }
@@ -157,6 +158,16 @@ export interface APIClient {
      * you the root page and one level of subpages, etc.
      */
     depth?: number
+    /**
+     * Only return pages that are published. Setting this to true will ensure that the
+     * page will appear the same in editing and preview views as it does in published
+     * and live views.
+     *
+     * By default it is false, which means that in editing/preview context it shows
+     * all pages, published and unpublished, but in published/live context it only shows
+     * other published pages.
+     */
+    published?: boolean
     /**
      * Get extra data from the page data
      *

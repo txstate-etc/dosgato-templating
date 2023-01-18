@@ -114,6 +114,11 @@ export interface UITemplate {
      * screen reader support.
      */
     hideLabel?: boolean
+    /**
+     * In case the button is irrelevant for certain pages, you may provide a function
+     * that uses the page data and path to decide whether to show the button.
+     */
+    shouldAppear?: (data: PageData, path: string) => boolean
   }[]
 }
 

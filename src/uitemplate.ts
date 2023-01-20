@@ -136,6 +136,6 @@ export interface DialogPageProp {
  * A function you may use in your dialogs to make an authenticated graphql request to the DosGato
  * API.
  */
-export async function dialogQuery <T = any> (query: string, variables: any) {
+export async function dialogQuery <T = any> (query: string, variables?: any) {
   return await ((window as any).api.query(query, variables) as Promise<T>)
 }

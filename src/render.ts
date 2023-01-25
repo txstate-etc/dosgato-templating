@@ -1,6 +1,6 @@
 import { htmlEncode, isBlank, isNotEmpty } from 'txstate-utils'
 import { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
-import { AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
+import { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 export function printHeader (ctx: ContextBase, content: string | undefined | null, attributes?: Record<string, string>) {
   if (isBlank(content)) return ''
@@ -45,6 +45,18 @@ export interface PictureAttributes {
     /** a list of available widths in case you want to filter some out and recreate the srcset */
     widths: PictureResize[]
   }[]
+}
+
+export interface AssetRecord {
+  id: string
+  path: string
+  checksum: string
+  name: string
+  extension: string
+  filename: string
+  mime: string
+  downloadLink: string
+  image?: PictureAttributes
 }
 
 export interface PageForNavigation {
@@ -108,6 +120,22 @@ export interface APIClient {
   getHref: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => string | undefined
 
   /**
+   * Get assets by link
+   *
+   * Certain components will be presenting download links for assets instead of showing images inline. In
+   * those cases, you can use this function instead of getImgAttributes. The result you would get from
+   * getImgAttributes will be inside the `image` property.
+   *
+   * It returns an array of assets because if you provide a link to an asset folder the result will be an
+   * array. So if you provide an asset link you will just get an array of length 1. The recursive parameter
+   * is available if you prefer to receive all assets that descend from the given folder instead of direct child
+   * assets.
+   *
+   * Will be dataloaded so you can safely use this in a Promise.all.
+   */
+  getAssetsByLink: (link: AssetLink | AssetFolderLink | string, recursive?: boolean) => Promise<AssetRecord[]>
+
+  /**
    * This function will retrieve information about an image to help you construct responsive HTML
    * for a <picture> element including the <img> and all <source> tags.
    *
@@ -115,7 +143,7 @@ export interface APIClient {
    * text gathered from a template's dialog should generally take precedence (though the dialog may
    * preload the alt text field with the asset repository default).
    *
-   * Will be dataloaded.
+   * Will be dataloaded so you can safely use this in a Promise.all.
    */
   getImgAttributes: (link: string | AssetLink | undefined, absolute?: boolean) => Promise<PictureAttributes | undefined>
 

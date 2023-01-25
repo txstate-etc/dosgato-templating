@@ -77,6 +77,7 @@ export interface DataLink {
  */
 export interface DataFolderLink {
   type: 'datafolder'
+  templateKey: string
   id: string // the asset folder's guid
   siteId?: string // null if global data
   path: string

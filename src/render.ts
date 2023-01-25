@@ -55,6 +55,8 @@ export interface AssetRecord {
   extension: string
   filename: string
   mime: string
+  size: number
+  meta: any
   downloadLink: string
   image?: PictureAttributes
 }

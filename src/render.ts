@@ -172,7 +172,8 @@ export interface APIClient {
      * Return pages beneath this path
      *
      * For instance, if you set this to '/site1' you will get back ['/site1/about',
-     * '/site1/history', '/site1/history/traditions', ...etc]
+     * '/site1/history', '/site1/history/traditions', ...etc] but you will NOT get
+     * back the '/site1' page.
      *
      * If you do not set `beneath`, you will get back an array that contains only
      * the root page of the pagetree you are in.

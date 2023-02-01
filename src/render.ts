@@ -2,6 +2,13 @@ import { htmlEncode, isBlank, isNotEmpty } from 'txstate-utils'
 import { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
 import { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
+/**
+ * Safely encapsulates `content` in header tags based on the `ctx` context passed and adds any passed `attributes` to the header tagging.
+ * If the headerLevel passed through `ctx` is outside the range of 1..6 it is normalized to the nearest value of 1 or 6.
+ * @returns An empty string if content is blank, undefined, or null - else an h<1..6> encapsulated content with attributes added to the encapsulating tag.
+ * @example ```
+ *   printHeader(this.renderCtx, htmlEncode(this.data.title), {class: 'some-extra-cssclass'})
+ * ``` */
 export function printHeader (ctx: ContextBase, content: string | undefined | null, attributes?: Record<string, string>) {
   if (isBlank(content)) return ''
   const level = ctx.headerLevel ?? 1

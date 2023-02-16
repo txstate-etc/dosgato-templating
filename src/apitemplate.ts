@@ -90,6 +90,18 @@ export interface APITemplate<DataType> {
    * by this function will also be scanned for links.
    */
   getFulltext?: FulltextGatheringFn<DataType>
+
+  /**
+   * The available component list in the main content area can get very long, among others. Therefore, each
+   * template may set a displayCategory and any templates that share a displayCategory will be grouped together
+   * underneath one tab when a user is presented with a choice of template.
+   *
+   * If a displayCategory is not set, there will be a default category like 'Standard'. If only one category
+   * exists for a group of available components, the tabs will not be shown at all. This means you do not have
+   * to bother setting displayCategory for minor cases like different kinds of slides in a slider (until there
+   * are so many that it becomes a good idea!).
+   */
+  displayCategory?: string
 }
 
 export interface APIComponentTemplate<DataType extends ComponentData = any> extends APITemplate<DataType> {

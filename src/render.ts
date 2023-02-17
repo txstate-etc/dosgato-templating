@@ -178,26 +178,26 @@ export interface APIClient {
    * @param opts
    * ```
    *  { // Return pages beneath this path but not the page that is this path.
-        // If not included you will get back a single element array that
+        // If `undefined` you will get back a single element array that
         // references the `PageForNaviation` of the root page of the pageTree. 
         beneath? string 
     
         // Relative to `beneath` this controls how many levels deep to fetch past
         // the top level set of results in the array. 0 returns the top level only
-        // while n > 0 returns n levels of children deep past the top level results.
-        // Leave `undefined` to fetch all.
+        // while n > 0 traverses n levels of children deep past the top level
+        // results. Leave `undefined` to fetch all.
         depth?: number 
         
         // Set to true to filter for only pages that are published. Else the default
         // of false will automatically not filter unpublished pages when in edit or
-        // preview mode but will filter if in preview mode. 
+        // preview mode but will filter if in published mode. 
         // WARNING:
         // If none of the pages in the current pageTree have been published and this is
         // set to `true` an error will be thrown as there will be no pages to return.
         published?: boolean
         
-        // Array of strings that specify dot-separated paths describing page data not
-        // normally fetched within the PageForNavigation results. For example,
+        // Array of strings that specify dot-separated object paths describing page
+        // data not normally fetched within the PageForNavigation results. For example,
         // ['hideInNav'] would append the page record hideInNav value to the
         // `PageForNavigation.extra` property as its own sub-property `hideInNav` that
         // would normally be excluded from the `PageForNavigation` properties.

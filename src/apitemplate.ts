@@ -167,6 +167,21 @@ export interface APIPageTemplate<DataType extends PageData = any> extends APITem
    * Must be null for non-page templates.
    */
   templateProperties?: any
+
+  /**
+   * Container components specify their own list of compatible templates for each of their areas,
+   * but it is possible that a sub-component could be compatible with its container while not really
+   * being compatible with the template as a whole. For instance, a special purpose template may want
+   * to allow containers but only a couple simple components inside those containers.
+   *
+   * Without this property, the only choice would be to re-make all your container components with a special
+   * templateKey just for this page template and their custom set of availableComponents. That's a lot to maintain,
+   * so this property is available to disallow sub-components at the page template level.
+   *
+   * Any template key you list here will be unavailable inside this page template, no matter how many
+   * nested containers are in between.
+   */
+  disallowComponents?: string[]
 }
 
 export interface APIDataTemplate<DataType extends DataData = any> extends APITemplate<DataType> {

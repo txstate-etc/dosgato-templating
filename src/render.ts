@@ -161,7 +161,7 @@ export interface APIClient {
    *
    * Will be dataloaded.
    */
-  getPage: ({ id, path, link }: { id?: string, path?: string, link?: string | PageLink }) => Promise<PageRecord<PageData> | undefined>
+  getPage: ({ id, path, link }: { id?: string, path?: string, link?: string | PageLink }) => Promise<PageRecord<PageData> & { title: string } | undefined>
 
   /** Get all ancestor pages of a specific page. First array element will be the pagetree root page. */
   getAncestors: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord<PageData>[]>

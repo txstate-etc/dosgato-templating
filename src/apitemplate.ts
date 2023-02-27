@@ -194,6 +194,13 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
   validate?: (data: DataType, extras: DataExtras) => Promise<ValidationFeedback[]>
 
   migrations?: DataMigration<DataType>[]
+
+  /**
+   * Mark this data type as inappropriate for sites. For example, if you have system-wide configuration
+   * stored in data, it may be confusing to see the site list when editing that data. Set this
+   * true to avoid showing the site list and stop allowing data of this type to be attached to sites.
+   */
+  global?: boolean
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate

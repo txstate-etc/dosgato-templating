@@ -8,7 +8,7 @@ import { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, P
  * @returns An empty string if content is blank, undefined, or null - else an h<1..6> encapsulated content with attributes added to the encapsulating tag.
  * @example ```
  *   printHeader(this.renderCtx, htmlEncode(this.data.title), {class: 'some-extra-cssclass'})
- *   // Renders: '<h1 class="some-extra-cssclass">Title</h1>' 
+ *   // Renders: '<h1 class="some-extra-cssclass">Title</h1>'
  * ``` */
 export function printHeader (ctx: ContextBase, content: string | undefined | null, attributes?: Record<string, string>) {
   if (isBlank(content)) return ''
@@ -172,40 +172,40 @@ export interface APIClient {
   /**
    * Get a hierarchical tree of pages suitable for generating a navigation UI for your template.
    *
-   * Each element in the array is recursive such that any subpage descendants can be found by 
+   * Each element in the array is recursive such that any subpage descendants can be found by
    * traversing each element's respective `children` property.
-   * 
+   *
    * @param opts
    * ```
    *  { // Return pages beneath this path but not the page that is this path.
         // If `undefined` you will get back a single element array that
-        // references the `PageForNaviation` of the root page of the pageTree. 
-        beneath? string 
-    
+        // references the `PageForNaviation` of the root page of the pageTree.
+        beneath? string
+
         // Relative to `beneath` this controls how many levels deep to fetch past
         // the top level set of results in the array. 0 returns the top level only
         // while n > 0 traverses n levels of children deep past the top level
         // results. Leave `undefined` to fetch all.
-        depth?: number 
-        
+        depth?: number
+
         // Set to true to filter for only pages that are published. Else the default
         // of false will automatically not filter unpublished pages when in edit or
-        // preview mode but will filter if in published mode. 
+        // preview mode but will filter if in published mode.
         // WARNING:
         // If none of the pages in the current pageTree have been published and this is
         // set to `true` an error will be thrown as there will be no pages to return.
         published?: boolean
-        
+
         // Array of strings that specify dot-separated object paths describing page
         // data not normally fetched within the PageForNavigation results. For example,
         // ['hideInNav'] would append the page record hideInNav value to the
         // `PageForNavigation.extra` property as its own sub-property `hideInNav` that
         // would normally be excluded from the `PageForNavigation` properties.
         extra?: string[]
-        
+
         // Whether the href property in the returned records should be an absolute URL.
         absolute?: boolean
-      } 
+      }
       ``` */
   getNavigation: (opts?: {
     /**

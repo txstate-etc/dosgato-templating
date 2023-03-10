@@ -213,6 +213,14 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderRichText!: (html: string | undefined, opts?: { headerLevel?: number, advanceHeader?: string }) => string
 
   /**
+   * When we give editors the ability to enter raw HTML, we still need to minimally process it to
+   * protect the rest of the page from unclosed tags and other syntax problems, but we don't want
+   * to muck around with headers or links, so this function will be provided by the render server
+   * and will only do the parsing and reconstruction part
+   */
+  renderRawHTML!: (html: string | undefined) => string
+
+  /**
    * The final phase of rendering a component is the render phase. This step is BOTTOM-UP -
    * components at the bottom of the hierarchy will be rendered first, and the result of the
    * render will be passed to parent components so that the HTML can be included during the

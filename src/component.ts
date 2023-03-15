@@ -721,6 +721,12 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   addHeader!: (key: string, value: string | undefined) => void
 
   /**
+   * This method will be provided to page templates by the render server. You may call it to set
+   * the HTTP response status at any time during the fetch, context, or render.
+   */
+  setStatus!: (statusCode: number) => void
+
+  /**
    * URL for the currently rendering page
    *
    * The URL currently being rendered. For instance, if we are in edit mode it would begin

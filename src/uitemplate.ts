@@ -139,3 +139,64 @@ export interface DialogPageProp {
 export async function dialogQuery <T = any> (query: string, variables?: any) {
   return await ((window as any).api.query(query, variables) as Promise<T>)
 }
+
+/**
+ * A type for the config object that should be exported from a CMS instance's admin/local/index.js
+ * to configure how that instance should work.
+ */
+export interface UIConfig {
+  templates: UITemplate[]
+  login: {
+    /**
+     * What to do when we get a 401 from the API. Generally we'll want to redirect
+     * to our SSO login page. Since we use sveltekit we redirect by throwing:
+     * `throw redirect(302, 'my.sso.org/login')`
+     */
+    handleUnauthorized: (environmentConfig: any) => void
+    /**
+     * When our SSO finishes and redirects the user back to us, we need to extract the token so
+     * that we can save it in session storage.
+     *
+     * Many SSO services don't provide a token your API/render services can permanently accept. In that
+     * case you need to create a login endpoint on the API or render service that can generate a token
+     * your API and render service will accept and then redirect back to /.admin where this function can
+     * retrieve the token.
+     *
+     * If this function is left undefined, we'll assume that you want cookies instead and don't want
+     * to use sessionStorage. Note that BOTH the API and render services need to be sent the cookie,
+     * so you need to redirect through them both to get the cookie created before finally redirecting
+     * back to /.admin
+     */
+    getToken?: (info: { url: URL }) => string | undefined
+    /**
+     * If your SSO requires a single return URL, you may need to do more work to return the user to
+     * where they were before they got a 401 that triggered a login. Maybe your SSO provides a passthrough
+     * parameter for you to use; otherwise you can set the return url in sessionStorage or a cookie.
+     *
+     * Whatever strategy you pick, it begins in handleUnauthorized. You'll save your current location in that
+     * function (by whatever means you choose), and then after the user has been redirected around a bit, you'll
+     * read what you saved in this function and return the URL. dosgato-admin will redirect for you.
+     */
+    getRedirect?: (info: { url: URL }) => string | undefined
+    /**
+     * If you do not provide a logout function, we will simply destroy the token in sessionStorage and
+     * refresh the page, which should trigger a 401 from the API, which should in turn trigger a redirect
+     * to the login page.
+     *
+     * If you use cookies or if your SSO provider uses cookies and would immediately log the user back in,
+     * then you need to visit a logout endpoint instead of refreshing.
+     *
+     * Since we use sveltekit, you trigger navigation with `goto('my.sso.org/logout')`
+     */
+    logout?: (environmentConfig: any, token: string) => void
+  }
+  /**
+   * Optional CMS logo to be placed in the top left of the admin UI.
+   */
+  logo?: IconOrSVG
+  /**
+   * If you would like to collect more information about assets from editors, you may provide a dialog
+   * here. The data collected will be available when you retrieve assets.
+   */
+  assetMetaDialog?: UITemplate['dialog']
+}

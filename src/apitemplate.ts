@@ -79,8 +79,12 @@ export interface APITemplate<DataType> {
 
   /**
    * Each template must provide a function that returns links from its data so that they
-   * can be indexed. Only fields that are links need to be returned. Links inside rich editor
-   * text will be extracted automatically from any text returned by getFulltext (see below)
+   * can be indexed. Only fields that are links need to be returned as links inside rich editor
+   * text will be extracted automatically from any text returned by getFulltext (see below).
+   * Examples of links to include would be links refereced by `href` and `src` attributes in
+   * anchor and image elements.
+   * @note You do not need to filter the links returned to ensure they're defined as that can
+   * be done by the routine that calls `getLinks`.
    */
   getLinks?: LinkGatheringFn<DataType>
 
@@ -88,6 +92,10 @@ export interface APITemplate<DataType> {
    * Each template must provide the text from any text or rich editor data it possesses, so that
    * the text can be decomposed into words and indexed for fulltext searches. Any text returned
    * by this function will also be scanned for links.
+   * Examples of text to include would be any text from data that's rendered as visible text content
+   * but not things like dates and times.
+   * @note You do not need to filter the text elements returned to ensure they're defined as that
+   * can be done by the routine that calls `getFulltext`.
    */
   getFulltext?: FulltextGatheringFn<DataType>
 

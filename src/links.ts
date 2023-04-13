@@ -89,8 +89,9 @@ const LinkRegex = /{.*"type"\s?:\s+"\w+".*?}/g
 
 /**
  * This function is used by template definitions to help them identify links inside large blocks
- * of text and return them for indexing, and by render definitions to help replace them with the actual URLs
- */
+ * of text and return them for indexing, and by render definitions to help replace them with the actual URLs.
+ * @note This does not mean it finds raw links and converts them but that it finds and returns `LinkDefinition`
+ * conformant object strings in the text and returns those. */
 export function extractLinksFromText (text: string | undefined) {
   if (!text) return []
   const matches = text.matchAll(LinkRegex)
@@ -98,9 +99,8 @@ export function extractLinksFromText (text: string | undefined) {
 }
 
 /**
- * This function is used by render definitions to replace links in large blocks with the actual
- * URLs they point to at render time.
- */
+ * This function is used by render definitions to replace `LinkDefinition` conformant link object text in large
+ * blocks with the actual URLs they point to at render time. */
 export function replaceLinksInText (text: string, resolved: Map<string, string | undefined>) {
   return text.replace(LinkRegex, m => resolved.get(m) ?? 'dg-broken-link')
 }

@@ -82,9 +82,12 @@ export interface APITemplate<DataType> {
    * can be indexed. Only fields that are links need to be returned as links inside rich editor
    * text will be extracted automatically from any text returned by getFulltext (see below).
    * Examples of links to include would be links refereced by `href` and `src` attributes in
-   * anchor and image elements.
+   * anchor, image, and video elements.
    * @note You do not need to filter the links returned to ensure they're defined as that can
    * be done by the routine that calls `getLinks`.
+   * @note If you are certain of the `LinkDefinition` translations allowed for the string of
+   * the link you would return in this array it would be a good idea to go ahead and coerce
+   * the string to the full type associated with it.
    */
   getLinks?: LinkGatheringFn<DataType>
 

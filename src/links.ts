@@ -1,3 +1,5 @@
+import { htmlDecode } from 'txstate-utils'
+
 /**
  * This is what an AssetLink should look like when stored in component data. It includes
  * lots of information so if the asset gets moved or recreated it may be possible to find
@@ -86,6 +88,7 @@ export interface DataFolderLink {
 export type LinkDefinition = AssetLink | AssetFolderLink | PageLink | WebLink | DataLink | DataFolderLink
 
 const LinkRegex = /{.*"type"\s?:\s?"\w+".*?}/g
+const HTMLEscapedLinkRegex = /{.*&quot;type&quot;\s?:\s?&quot;\w+&quot;.*?}/g
 
 /**
  * This function is used by template definitions to help them identify links inside large blocks
@@ -94,13 +97,14 @@ const LinkRegex = /{.*"type"\s?:\s?"\w+".*?}/g
  * conformant object strings in the text and returns those. */
 export function extractLinksFromText (text: string | undefined) {
   if (!text) return []
-  const matches = text.matchAll(LinkRegex)
-  return Array.from(matches).map(m => JSON.parse(m[0])) as LinkDefinition[]
+  const matches = Array.from(text.matchAll(LinkRegex)).map(m => JSON.parse(m[0]))
+  const morematches = Array.from(text.matchAll(HTMLEscapedLinkRegex)).map(m => JSON.parse(htmlDecode(m[0])))
+  return matches.concat(morematches) as LinkDefinition[]
 }
 
 /**
  * This function is used by render definitions to replace `LinkDefinition` conformant link object text in large
  * blocks with the actual URLs they point to at render time. */
 export function replaceLinksInText (text: string, resolved: Map<string, string | undefined>) {
-  return text.replace(LinkRegex, m => resolved.get(m) ?? 'dg-broken-link')
+  return text.replace(LinkRegex, m => resolved.get(m) ?? 'dg-broken-link').replace(HTMLEscapedLinkRegex, m => resolved.get(htmlDecode(m)) ?? 'dg-broken-link')
 }

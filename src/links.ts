@@ -85,7 +85,7 @@ export interface DataFolderLink {
 
 export type LinkDefinition = AssetLink | AssetFolderLink | PageLink | WebLink | DataLink | DataFolderLink
 
-const LinkRegex = /{.*"type"\s?:\s+"\w+".*?}/g
+const LinkRegex = /{.*"type"\s?:\s?"\w+".*?}/g
 
 /**
  * This function is used by template definitions to help them identify links inside large blocks

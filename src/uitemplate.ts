@@ -140,6 +140,10 @@ export async function dialogQuery <T = any> (query: string, variables?: any) {
   return await ((window as any).api.query(query, variables) as Promise<T>)
 }
 
+export interface TracingEnvironment {
+  tracingServer: string
+}
+
 /**
  * A type for the config object that should be exported from a CMS instance's admin/local/index.js
  * to configure how that instance should work.
@@ -201,9 +205,9 @@ export interface UIConfig {
   assetMetaDialog?: UITemplate['dialog']
 
   tracing?: {
-    init?: () => void
-    startTransaction?: (name: string, details: any) => void
-    endTransaction?: (name: string, details: any) => void
-    event?: (name: string, details: any) => void
+    init?: (env: TracingEnvironment) => void
+    startTransaction?: (name: string, details: any, env: TracingEnvironment) => void
+    endTransaction?: (name: string, details: any, env: TracingEnvironment) => void
+    event?: (name: string, details: any, env: TracingEnvironment) => void
   }
 }

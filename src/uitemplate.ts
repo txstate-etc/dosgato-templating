@@ -199,4 +199,11 @@ export interface UIConfig {
    * here. The data collected will be available when you retrieve assets.
    */
   assetMetaDialog?: UITemplate['dialog']
+
+  tracing?: {
+    init?: () => void
+    startTransaction?: (name: string, details: any) => void
+    endTransaction?: (name: string, details: any) => void
+    event?: (name: string, details: any) => void
+  }
 }

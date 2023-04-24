@@ -69,6 +69,15 @@ export interface AssetRecord {
   image?: PictureAttributes
 }
 
+export interface DataRecord {
+  id: string
+  path: string
+  name: string
+  modifiedAt?: Date
+  publishedAt?: Date
+  data: DataData
+}
+
 export interface PageForNavigation {
   id: string
   name: string
@@ -260,15 +269,23 @@ export interface APIClient {
    * Get data entries by link or folder link
    *
    * Returns an array in case link is a DataFolderLink. If link is a DataLink, will return an
-   * array with length <= 1.
+   * array with length <= 1. If link is a DataFolderLink to a DataRoot, returns all descendant data
+   * recursively.
+   *
+   * Never returns deleted or unpublished data, and only returns the published version
+   * of a piece of data, even in edit mode.
    */
-  getDataByLink: (link: string | DataLink | DataFolderLink) => Promise<DataData[]>
+  getDataByLink: (link: string | DataLink | DataFolderLink) => Promise<DataRecord[]>
 
   /**
    * Get data entries by full path including site
    *
    * Use '/global' for global data. If path refers to a specific data item, will return
-   * an array with length <= 1.
+   * an array with length <= 1. If path refers to a DataRoot, returns all descendant
+   * data recursively.
+   *
+   * Never returns deleted or unpublished data, and only returns the published version
+   * of a piece of data, even in edit mode.
    */
-  getDataByPath: (templateKey: string, path: string) => Promise<DataData[]>
+  getDataByPath: (templateKey: string, path: string) => Promise<DataRecord[]>
 }

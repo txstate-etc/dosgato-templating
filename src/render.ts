@@ -73,7 +73,7 @@ export interface DataRecord {
   id: string
   path: string
   name: string
-  modifiedAt?: Date
+  modifiedAt: Date
   publishedAt?: Date
   data: DataData
 }

@@ -1,4 +1,4 @@
-import { ComponentData, PageData } from './component.js'
+import type { ComponentData, PageData } from './component.js'
 
 // extremely brief version of the IconifyIcon definition so we don't have to import
 // the whole library, may need to keep this in sync with @iconify/svelte (currently 3.0.0)

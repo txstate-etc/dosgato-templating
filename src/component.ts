@@ -1,8 +1,8 @@
 import type { IncomingHttpHeaders } from 'http'
 import type { ParsedUrlQuery } from 'querystring'
-import { get, isNotBlank, printIf, titleCase } from 'txstate-utils'
+import { get, isNotBlank, titleCase } from 'txstate-utils'
 import { ResourceProvider } from './provider.js'
-import { APIClient } from './render.js'
+import { type APIClient } from './render.js'
 
 function defaultWrap (info: RenderComponentsWrapParams) { return info.output }
 /**

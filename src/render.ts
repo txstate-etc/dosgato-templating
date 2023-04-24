@@ -1,6 +1,6 @@
 import { htmlEncode, isBlank, isNotEmpty } from 'txstate-utils'
-import { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
-import { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
+import type { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
+import type { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 /**
  * Safely encapsulates `content` in header tags based on the `ctx` context passed and adds any passed `attributes` to the header tagging.

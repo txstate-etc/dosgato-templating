@@ -1,5 +1,5 @@
-import { ComponentData, DataData, PageData } from './component.js'
-import { LinkDefinition } from './links.js'
+import type { ComponentData, DataData, PageData } from './component.js'
+import { type LinkDefinition } from './links.js'
 import { stopwords } from './stopwords.js'
 
 export type APITemplateType = 'page' | 'component' | 'data'

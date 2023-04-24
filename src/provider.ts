@@ -176,7 +176,7 @@ export abstract class ResourceProvider {
    * defer the CSS for that modal since it will not be needed until the page has gone interactive
    * and the user has clicked something.
    */
-  static cssBlocks: Map<string, CSSBlock> = new Map()
+  static cssBlocks = new Map<string, CSSBlock>()
 
   /**
    * A template can provide SASS mixins and functions for use by other SASS-based CSS
@@ -190,7 +190,7 @@ export abstract class ResourceProvider {
    * ```
    * In this case `my-mixin-name` is the key used for this Map.
    */
-  static scssIncludes: Map<string, SCSSInclude> = new Map()
+  static scssIncludes = new Map<string, SCSSInclude>()
 
   /**
    * Same as cssBlocks() but for javascript.
@@ -199,7 +199,7 @@ export abstract class ResourceProvider {
    * after the page renders. Any code that adds event observers or the like should be marked with
    * async to improve the initial render time.
    */
-  static jsBlocks: Map<string, JSBlock> = new Map()
+  static jsBlocks = new Map<string, JSBlock>()
 
   /**
    * If your template needs to serve any files, like fonts or images, you can provide
@@ -220,7 +220,7 @@ export abstract class ResourceProvider {
    * DO NOT change the mime type without changing the name. Other templates could end up with
    * the wrong file extension.
    */
-  static files: Map<string, FileDeclaration> = new Map()
+  static files = new Map<string, FileDeclaration>()
 
   /**
    * Template code will need to generate HTML and CSS that points at the static files
@@ -234,6 +234,6 @@ export abstract class ResourceProvider {
    * Now when a template needs a web path to a resource to put into its HTML, it can do
    * `<img src="${TemplateClass.webpath('keyname')}">`
    */
-  static webpaths: Map<string, string> = new Map()
+  static webpaths = new Map<string, string>()
   static webpath (name: string) { return this.webpaths.get(name) }
 }

@@ -1,4 +1,4 @@
-import { htmlDecode } from 'txstate-utils'
+import { htmlDecode, isNotNull } from 'txstate-utils'
 
 /**
  * This is what an AssetLink should look like when stored in component data. It includes
@@ -87,8 +87,17 @@ export interface DataFolderLink {
 
 export type LinkDefinition = AssetLink | AssetFolderLink | PageLink | WebLink | DataLink | DataFolderLink
 
-const LinkRegex = /{[^}]*"type"\s?:\s?"\w+"[^}]*}/g
-const HTMLEscapedLinkRegex = /{[^}]*&quot;type&quot;\s?:\s?&quot;\w+&quot;[^}]*}/g
+const LinkRegex = /{[^{}]*"type"\s?:\s?"\w+"[^{}]*}/g
+const HTMLEscapedLinkRegex = /{[^{}]*&quot;type&quot;\s?:\s?&quot;\w+&quot;[^{}]*}/g
+
+function safeParse (json: string) {
+  try {
+    return JSON.parse(json)
+  } catch (e: any) {
+    console.error(e, json)
+    return undefined
+  }
+}
 
 /**
  * This function is used by template definitions to help them identify links inside large blocks
@@ -97,8 +106,8 @@ const HTMLEscapedLinkRegex = /{[^}]*&quot;type&quot;\s?:\s?&quot;\w+&quot;[^}]*}
  * conformant object strings in the text and returns those. */
 export function extractLinksFromText (text: string | undefined) {
   if (!text) return []
-  const matches = Array.from(text.matchAll(LinkRegex)).map(m => JSON.parse(m[0]))
-  const morematches = Array.from(text.matchAll(HTMLEscapedLinkRegex)).map(m => JSON.parse(htmlDecode(m[0])))
+  const matches = Array.from(text.matchAll(LinkRegex)).map(m => safeParse(m[0])).filter(isNotNull)
+  const morematches = Array.from(text.matchAll(HTMLEscapedLinkRegex)).map(m => safeParse(htmlDecode(m[0]))).filter(isNotNull)
   return matches.concat(morematches) as LinkDefinition[]
 }
 
@@ -106,5 +115,5 @@ export function extractLinksFromText (text: string | undefined) {
  * This function is used by render definitions to replace `LinkDefinition` conformant link object text in large
  * blocks with the actual URLs they point to at render time. */
 export function replaceLinksInText (text: string, resolved: Map<string, string | undefined>) {
-  return text.replace(LinkRegex, m => resolved.get(m) ?? 'dg-broken-link').replace(HTMLEscapedLinkRegex, m => resolved.get(htmlDecode(m)) ?? 'dg-broken-link')
+  return text.replace(LinkRegex, m => resolved.get(m) ?? safeParse(m)?.path ?? 'dg-broken-link').replace(HTMLEscapedLinkRegex, m => resolved.get(htmlDecode(m)) ?? safeParse(htmlDecode(m))?.path ?? 'dg-broken-link')
 }

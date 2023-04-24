@@ -403,7 +403,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     this.extension = extension
     this.parent = parent
     const { areas, ...ownData } = data
-    this.data = ownData
+    this.data = ownData as any
     this.path = path
     this.hadError = false
     let tmpParent = this.parent ?? this
@@ -415,7 +415,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   // Properties provided during the rendering process. You do not have to provide these when
   // building a template, but you can use them in the functions you do provide
   areas = new Map<string, Component[]>() // a Map of area names and the array of hydrated components in each
-  data: Omit<DataType, 'areas'> // the component data
+  data: DataType // the component data
   fetched!: FetchedType // where we store the output from your `fetched` method
   renderCtx!: RenderContextType // where we store the output from your `setContext` method
   path: string // the dot-separated path to this component within the page data

@@ -77,7 +77,7 @@ export interface UITemplate {
    *   anotherArea: [componentData3]
    * }
    */
-  defaultContent?: Record<string, ComponentData[]>
+  defaultContent?: Record<string, ComponentData[]> | ((data: ComponentData) => Record<string, ComponentData[]>)
 
   /**
    * if present this SVG will be used when presenting users with

@@ -468,6 +468,7 @@ export interface PageRecord<DataType extends PageData = PageData> {
   publishedAt?: Date
   path: string
   data: DataType
+  pagetree: { id: string }
   site: SiteInfo
 }
 

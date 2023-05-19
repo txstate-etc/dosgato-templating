@@ -462,6 +462,7 @@ export interface PageRecord<DataType extends PageData = PageData> {
   id: string
   name: string
   linkId: string
+  fallbackTitle: string
   createdAt: Date
   modifiedAt: Date
   publishedAt?: Date

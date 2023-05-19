@@ -126,6 +126,13 @@ export interface APIClient {
   resolveLink: (lnk: string | LinkDefinition | undefined, opts?: { absolute?: boolean, extension?: string }) => Promise<string | undefined>
 
   /**
+   * Exactly like resolveLink but also returns the title of the target page, if the target page
+   * is internal to the CMS. If the target is a random web page outside the CMS, title will be
+   * undefined. Perhaps in the future title could be scraped from the page HTML.
+   */
+  resolveLinkAndTitle: (lnk: string | LinkDefinition | undefined, opts?: { absolute?: boolean, extension?: string }) => Promise<{ href?: string, title?: string }>
+
+  /**
    * Get a link href for a page
    *
    * By default this will generate relative links based on the page currently being rendered. Set

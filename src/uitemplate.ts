@@ -206,8 +206,8 @@ export interface UIConfig {
 
   tracing?: {
     init?: (env: TracingEnvironment) => void
-    startTransaction?: (name: string, details: any, env: TracingEnvironment) => void
-    endTransaction?: (name: string, details: any, env: TracingEnvironment) => void
-    event?: (name: string, details: any, env: TracingEnvironment) => void
+    startTransaction?: (name: string, details: any, env?: TracingEnvironment) => void
+    endTransaction?: (name: string, details: any, env?: TracingEnvironment) => void
+    event?: (name: string, details: any, env?: TracingEnvironment) => void
   }
 }

@@ -126,11 +126,16 @@ export interface APIClient {
   resolveLink: (lnk: string | LinkDefinition | undefined, opts?: { absolute?: boolean, extension?: string }) => Promise<string | undefined>
 
   /**
-   * Exactly like resolveLink but also returns the title of the target page, if the target page
-   * is internal to the CMS. If the target is a random web page outside the CMS, title will be
-   * undefined. Perhaps in the future title could be scraped from the page HTML.
+   * Exactly like resolveLink but also returns more data.
+   *
+   * First, the title of the target page, if the target page is internal to the CMS. If the
+   * target is a random web page outside the CMS, title will be undefined. Perhaps in the future
+   * title could be scraped from the page HTML.
+   *
+   * Second, a broken boolean that indicates whether the targeted page actually exists. See getHrefPlus
+   * for a detailed explanation.
    */
-  resolveLinkAndTitle: (lnk: string | LinkDefinition | undefined, opts?: { absolute?: boolean, extension?: string }) => Promise<{ href?: string, title?: string }>
+  resolveLinkPlus: (lnk: string | LinkDefinition | undefined, opts?: { absolute?: boolean, extension?: string }) => Promise<{ href?: string, title?: string, broken: boolean }>
 
   /**
    * Get a link href for a page
@@ -144,6 +149,21 @@ export interface APIClient {
    * would work as soon as the launch info is enabled.
    */
   getHref: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => string | undefined
+
+  /**
+   * Exactly like getHref except it also returns whether or not the link it's returning is actually
+   * a broken link.
+   *
+   * When an internal link points at a page that has since been deleted, we don't want to return
+   * undefined or empty string or something like that, because it would mask the issue that a link has
+   * stopped working. Instead we return the path that we once pointed at, which we know won't work, but
+   * is at least something the user can read, and then reason about why the link broke and how to fix it.
+   *
+   * Since we are returning data we know is broken, it's nice to have a boolean that indicates that fact.
+   * Based on that boolean, components can be configured to render a shiny red warning message in edit mode
+   * so that editors can quickly identify broken links on their pages.
+   */
+  getHrefPlus: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => { href: string | undefined, broken: boolean }
 
   /**
    * Get assets by link

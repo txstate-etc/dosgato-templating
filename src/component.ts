@@ -184,7 +184,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * method to prepare editor-provided HTML for later rendering. It will do things like find and
    * resolve link definitions in the internal dosgato format.
    */
-  fetchRichText!: (html: string | undefined) => Promise<void>
+  fetchRichText!: (html: string | undefined, opts?: { absolute?: boolean }) => Promise<void>
 
   /**
    * This function will be provided by the rendering server and should be used during the render

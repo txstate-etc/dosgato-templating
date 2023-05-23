@@ -144,6 +144,13 @@ export interface TracingEnvironment {
   tracingServer: string
 }
 
+export interface TracingInterface {
+  init?: (env: TracingEnvironment) => void
+  startTransaction?: (name: string, details: any, env?: TracingEnvironment) => void
+  endTransaction?: (name: string, details: any, env?: TracingEnvironment) => void
+  event?: (name: string, details: any, env?: TracingEnvironment) => void
+}
+
 /**
  * A type for the config object that should be exported from a CMS instance's admin/local/index.js
  * to configure how that instance should work.
@@ -204,10 +211,5 @@ export interface UIConfig {
    */
   assetMetaDialog?: UITemplate['dialog']
 
-  tracing?: {
-    init?: (env: TracingEnvironment) => void
-    startTransaction?: (name: string, details: any, env?: TracingEnvironment) => void
-    endTransaction?: (name: string, details: any, env?: TracingEnvironment) => void
-    event?: (name: string, details: any, env?: TracingEnvironment) => void
-  }
+  tracing?: TracingInterface
 }

@@ -745,7 +745,7 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
    * Get a URL for the current page with a different extension
    */
   variationUrl (extension: string) {
-    return `${this.url.replace(/\.\w+$/, '')}.${extension}`
+    return (this.url === '/' ? '/.root' : this.url.replace(/\.[^/]+$/, '')) + '.' + extension
   }
 
   protected passError (e: Error, path: string) {

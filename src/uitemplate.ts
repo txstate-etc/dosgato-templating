@@ -212,4 +212,10 @@ export interface UIConfig {
   assetMetaDialog?: UITemplate['dialog']
 
   tracing?: TracingInterface
+
+  /** Non-Awaited async call for logging interface interactions if defined.
+   * Useful for defining how to log form submissions, interaction clicks, page edits, or state
+   * changes of different interfaces. Can be directed to separate endpoint for APM logging as
+   * long as that POST is also non-awaited. */
+  uiInteractionsLogger?: (logData: any, options?: any) => void
 }

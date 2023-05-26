@@ -151,6 +151,32 @@ export interface TracingInterface {
   event?: (name: string, details: any, env?: TracingEnvironment) => void
 }
 
+export interface BaseEvent {
+  /** The larger UI area the user is interacting with. Admin or ComponetDialog for instance */
+  // May need to do a translation between component id/name to colloquial names.
+  eventType: string
+
+  // The specific action the user took. AddPage or SaveComponent for instance
+  action: string
+
+  // Additional data points specific to an event. Keep it simple please
+  // Not a good place for catch all details, we want to keep the overall structure here
+  // efficiently simple so we want to avoid catch all logging in general. This is for
+  // additional details we absolutely must have.
+  // Whatever we put in here becomes a column in a table in elasticsearch.
+  additionalProperties?: Record<string, string | undefined>
+}
+
+export interface UserEvent extends BaseEvent {
+  // The context in which the action occured. Often a page or compoent path
+  // Example: if they're adding a page, where are they adding the page.
+  // Set at the big layout level.
+  screen: string
+
+  // Each screen needs to set their target for what actions are targetd to.... Page or Component we're operating on.
+  target: string
+}
+
 /**
  * A type for the config object that should be exported from a CMS instance's admin/local/index.js
  * to configure how that instance should work.
@@ -217,5 +243,5 @@ export interface UIConfig {
    * Useful for defining how to log form submissions, interaction clicks, page edits, or state
    * changes of different interfaces. Can be directed to separate endpoint for APM logging as
    * long as that POST is also non-awaited. */
-  uiInteractionsLogger?: (logData: any, options?: any) => void
+  uiInteractionsLogger?: (info: UserEvent) => void
 }

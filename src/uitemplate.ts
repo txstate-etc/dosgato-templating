@@ -152,28 +152,35 @@ export interface TracingInterface {
 }
 
 export interface BaseEvent {
-  /** The larger UI area the user is interacting with. Admin or ComponetDialog for instance */
-  // May need to do a translation between component id/name to colloquial names.
+  /** The larger UI area the user is interacting with that the event is emitted from.
+   * @example 'ActionPanel', 'PageEditor', 'ComponetDialog' */
   eventType: string
 
-  // The specific action the user took. AddPage or SaveComponent for instance
+  /** The specific action the user took. Typically the label for the element that emits
+   * the event for instance.
+   * @example 'Add Page', 'Edit Page', 'Preview', 'Cancel Preview' */
   action: string
 
-  // Additional data points specific to an event. Keep it simple please
-  // Not a good place for catch all details, we want to keep the overall structure here
-  // efficiently simple so we want to avoid catch all logging in general. This is for
-  // additional details we absolutely must have.
-  // Whatever we put in here becomes a column in a table in elasticsearch.
+  /** Additional data points specific to a particular event type's context. These should
+   * be significant enough to understanding the event to merrit adding additional columns
+   * in tools like elastic-search.
+   * @warning This is NOT a catch-all property. */
   additionalProperties?: Record<string, string | undefined>
 }
 
 export interface UserEvent extends BaseEvent {
-  // The context in which the action occured. Often a page or compoent path
-  // Example: if they're adding a page, where are they adding the page.
-  // Set at the big layout level.
+  /** The page, screen, or dialog the user is looking at in which the associated event emitter is
+   * in context to.
+   * @example '/pages', '/pages/[id]', '/pages/[id]/dialog' */
   screen: string
 
-  // Each screen needs to set their target for what actions are targetd to.... Page or Component we're operating on.
+  /** The target the emitted event is to trigger actions on.
+   * Each page/screen, or dialog, needs to set their target for what events in it are targeted to act on in
+   * in its context.
+   *
+   * For example: The page in the page tree of the Pages screen that ActionPanel actions,
+   * such as edit or preview, will act on.
+   * @example '/site3-sandbox/about' */
   target: string
 }
 

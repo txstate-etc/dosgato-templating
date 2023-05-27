@@ -198,7 +198,7 @@ export interface UIConfig {
     /**
      * What to do when we get a 401 from the API. Generally we'll want to redirect
      * to our SSO login page. Since we use sveltekit we redirect by throwing:
-     * `throw redirect(302, 'my.sso.org/login')`
+     * `throw redirect(302, 'https://my.sso.org/login')`
      */
     handleUnauthorized: (environmentConfig: any) => void
     /**
@@ -234,7 +234,7 @@ export interface UIConfig {
      * If you use cookies or if your SSO provider uses cookies and would immediately log the user back in,
      * then you need to visit a logout endpoint instead of refreshing.
      *
-     * Since we use sveltekit, you trigger navigation with `goto('my.sso.org/logout')`
+     * Since we use sveltekit, you trigger navigation with `goto('https://my.sso.org/logout')`
      */
     logout?: (environmentConfig: any, token: string) => void
   }
@@ -254,5 +254,5 @@ export interface UIConfig {
    * Useful for defining how to log form submissions, interaction clicks, page edits, or state
    * changes of different interfaces. Can be directed to separate endpoint for APM logging as
    * long as that POST is also non-awaited. */
-  uiInteractionsLogger?: (info: UserEvent, config?: any) => void
+  uiInteractionsLogger?: (info: UserEvent, environmentConfig: any) => void
 }

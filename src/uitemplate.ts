@@ -188,6 +188,11 @@ export interface UserEvent extends BaseEvent {
   target: string
 }
 
+interface AssetMetaDisplay {
+  component: UITemplate['dialog']
+  title: string
+}
+
 /**
  * A type for the config object that should be exported from a CMS instance's admin/local/index.js
  * to configure how that instance should work.
@@ -246,7 +251,28 @@ export interface UIConfig {
    * If you would like to collect more information about assets from editors, you may provide a dialog
    * here. The data collected will be available when you retrieve assets.
    */
-  assetMetaDialog?: UITemplate['dialog']
+  assetMeta?: {
+    dialog: UITemplate['dialog']
+
+    /**
+     * If you provide an assetMeta.dialog to collect extra details about each asset, you'll probably want to
+     * display those details on the asset detail screen. Provide this function to return a map of detail
+     * keys and values to be displayed alongside the other vitals like asset name, size, type, etc. Insertion
+     * order will be maintained.
+     */
+    details?: (data: any) => Record<string, string>
+
+    /**
+     * If you provide an assetMeta.dialog to collect extra details about each asset, you may want to use
+     * assetMeta.details to show some of it, and/or you may want your own box on the detail page to do something
+     * cool and custom. Provide a svelte component here and it will be passed the asset object with all of
+     * its metadata so that you can draw whatever you like. Your content will be placed inside a box titled
+     * with the title property.
+     *
+     * Provide an array to be given multiple boxes.
+     */
+    display?: AssetMetaDisplay | AssetMetaDisplay[]
+  }
 
   tracing?: TracingInterface
 

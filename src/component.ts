@@ -492,6 +492,13 @@ export interface DataData {
   [keys: string]: any
 }
 
+export interface AssetData<T = any> {
+  shasum: string
+  uploadedFilename: string
+  meta: T
+  [keys: string]: any
+}
+
 export interface ContextBase {
   /**
    * For accessibility, every component should consider whether it is creating headers

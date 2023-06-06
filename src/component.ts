@@ -476,6 +476,26 @@ export interface PageRecordOptionalData<DataType extends PageData = PageData> ex
   data?: DataType
 }
 
+export interface DataRecord<DataType extends DataData = DataData> {
+  id: string
+  name: string
+  linkId: string
+  createdAt: Date
+  createdBy: {
+    id: string
+    name: string
+  }
+  modifiedAt: Date
+  modifiedBy: {
+    id: string
+    name: string
+  }
+  publishedAt?: Date
+  path: string
+  data: DataType
+  site?: SiteInfo
+}
+
 export interface ComponentData {
   templateKey: string
   areas?: Record<string, ComponentData[]>

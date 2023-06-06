@@ -1,4 +1,5 @@
-import type { ComponentData, PageData } from './component.js'
+import type { ComponentData, DataData, PageData } from './component.js'
+import { type DataRecord } from './render.js'
 
 // extremely brief version of the IconifyIcon definition so we don't have to import
 // the whole library, may need to keep this in sync with @iconify/svelte (currently 3.0.0)
@@ -20,7 +21,7 @@ export interface IconOrSVG extends IconifyIcon {
   raw?: true
 }
 
-export interface UITemplate {
+export interface UITemplateBase {
   templateKey: string
 
   /**
@@ -64,6 +65,23 @@ export interface UITemplate {
   randomId?: string
 
   /**
+   * if present this SVG will be used when presenting users with
+   * an array of choices of templates to create. Ideally it should look
+   * a lot like the template will look on a webpage. It will be presented
+   * about 1-2 inches wide
+   */
+  preview?: IconOrSVG
+
+  /**
+   * if present this icon will be used to represent the template in various
+   * UI contexts. It will be presented about 3mm wide. Falls back to the
+   * preview image.
+   */
+  icon?: IconOrSVG
+}
+
+export interface UITemplate extends UITemplateBase {
+  /**
    * Sometimes when you create a component that has areas, you want to automatically fill
    * one or more areas with some default introductory content.
    *
@@ -78,21 +96,6 @@ export interface UITemplate {
    * }
    */
   defaultContent?: Record<string, ComponentData[]> | ((data: ComponentData) => Record<string, ComponentData[]>)
-
-  /**
-   * if present this SVG will be used when presenting users with
-   * an array of choices of templates to create. Ideally it should look
-   * a lot like the template will look on a webpage. It will be presented
-   * about 1-2 inches wide
-   */
-  preview?: IconOrSVG
-
-  /**
-   * if present this icon will be used to represent the template in various
-   * UI contexts. It will be presented about 3mm wide. Falls back to the
-   * preview image.
-   */
-  icon?: IconOrSVG
 
   /**
    * Add buttons to the page bar in the page editing UI when editing pages with this
@@ -119,6 +122,31 @@ export interface UITemplate {
      * that uses the page data and path to decide whether to show the button.
      */
     shouldAppear?: (data: PageData, path: string) => boolean
+  }[]
+}
+
+export interface UITemplateData extends UITemplateBase {
+  /**
+   * Without configuration, only data entry names and modified dates are shown
+   * in the list view. Use this to configure your own set of columns.
+   */
+  columns?: {
+    /**
+     * A title for the column in header row.
+     */
+    title: string
+    /**
+     * If given a string, will be treated as a dot-separated path within DataData and
+     * the content at that path will be html-encoded and placed inside the field.
+     *
+     * If given a function, the result of the function will be placed inside the field
+     * without html-encoding, so that you can write your own HTML. Do the encoding yourself.
+     */
+    get: string | ((data: DataRecord) => string)
+    /**
+     * An icon for the cell in all regular rows (not the header).
+     */
+    icon?: (data: DataData) => IconOrSVG
   }[]
 }
 

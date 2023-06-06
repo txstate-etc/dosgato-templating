@@ -201,8 +201,18 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
    * Data template implementations receive the id of the dataroot the data is/will be inside,
    * as well as the folder id (if applicable) and their own id. Keep in mind dataId will be
    * null when it is a creation operation.
+   *
+   * nameIsTaken will be true when the automatically generated name for the data entry already
+   * exists elsewhere in the folder. This fact can be ignored and the generated name will be automatically
+   * numerated to be unique. If you would rather present the editor with a validation error and let them resolve
+   * the conflict, this parameter gives you an opportunity to do that.
+   *
+   * Note that numeration can lead to the name changing during unrelated edits, possibly breaking
+   * links. For example, on creation the name is set with a "-1" suffix because of a conflict, then
+   * the conflicting entry is deleted. Editing this data entry again will remove the "-1" because
+   * of the lack of conflict.
    */
-  validate?: (data: DataType, extras: DataExtras) => Promise<ValidationFeedback[]>
+  validate?: (data: DataType, extras: DataExtras, nameIsTaken: boolean) => Promise<ValidationFeedback[]>
 
   migrations?: DataMigration<DataType>[]
 
@@ -212,6 +222,29 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
    * true to avoid showing the site list and stop allowing data of this type to be attached to sites.
    */
   global?: boolean
+
+  /**
+   * Mark this data type as inappropriate for global. For example, if you have a data type for site
+   * configurations, a global entry might make no sense. Setting this will avoid showing editors
+   * the global space in the dataroot list.
+   */
+  noglobal?: boolean
+
+  /**
+   * Data objects must have names so that they can be linked to at a specific path. However,
+   * for an editor, setting an addressable name for a data entry that already has, say, a
+   * title, is both tedious and confusing.
+   *
+   * Instead, it is the data template developer's responsibility to create the name from
+   * the data gathered from the editor. If there is a title, that's a great option. Otherwise,
+   * the dialog may need to have an explicit `name` field. Either way it's up to the developer
+   * of each data template to decide and provide.
+   *
+   * Whatever is returned from this function will be further processed to fit well in a path -
+   * i.e. lower-cased and non-word characters replaced by a dash. If there is a duplicate data
+   * entry in the same folder, it will be automatically numerated.
+   */
+  computeName: (data: DataType) => string
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate

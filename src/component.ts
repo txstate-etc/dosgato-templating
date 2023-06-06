@@ -479,7 +479,6 @@ export interface PageRecordOptionalData<DataType extends PageData = PageData> ex
 export interface DataRecord<DataType extends DataData = DataData> {
   id: string
   name: string
-  linkId: string
   createdAt: Date
   createdBy: {
     id: string

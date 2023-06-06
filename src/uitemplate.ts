@@ -1,5 +1,4 @@
-import type { ComponentData, DataData, PageData } from './component.js'
-import { type DataRecord } from './render.js'
+import type { ComponentData, DataData, PageData, DataRecord } from './component.js'
 
 // extremely brief version of the IconifyIcon definition so we don't have to import
 // the whole library, may need to keep this in sync with @iconify/svelte (currently 3.0.0)

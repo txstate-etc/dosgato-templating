@@ -1,5 +1,5 @@
 import { htmlEncode, isBlank, isNotEmpty } from 'txstate-utils'
-import type { ContextBase, DataData, PageData, PageRecord, PageRecordOptionalData } from './component.js'
+import type { ContextBase, DataRecord, PageData, PageRecord, PageRecordOptionalData } from './component.js'
 import type { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 /**
@@ -67,15 +67,6 @@ export interface AssetRecord {
   meta: any
   downloadLink: string
   image?: PictureAttributes
-}
-
-export interface DataRecord {
-  id: string
-  path: string
-  name: string
-  modifiedAt: Date
-  publishedAt?: Date
-  data: DataData
 }
 
 export interface PageForNavigation {

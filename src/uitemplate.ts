@@ -126,8 +126,10 @@ export interface UITemplate extends UITemplateBase {
 
 export interface UITemplateData extends UITemplateBase {
   /**
-   * Without configuration, only data entry names and modified dates are shown
-   * in the list view. Use this to configure your own set of columns.
+   * Add extra columns between name and published status.
+   *
+   * Without configuration, only data entry name, published status, and modified info
+   * is shown in the list view.
    */
   columns?: {
     /**
@@ -146,6 +148,18 @@ export interface UITemplateData extends UITemplateBase {
      * An icon for the cell in all regular rows (not the header).
      */
     icon?: (data: DataData) => IconOrSVG
+    /**
+     * Set a fixed width for this column
+     *
+     * For example, "50px", "12em", or "10vw"
+     */
+    fixed?: string
+    /**
+     * Set a dynamic width for this column as a ratio of the name column
+     *
+     * For example, 0.5 = half the name column, 2 = double the name column
+     */
+    grow?: number
   }[]
 }
 

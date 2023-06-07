@@ -243,8 +243,11 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
    * Whatever is returned from this function will be further processed to fit well in a path -
    * i.e. lower-cased and non-word characters replaced by a dash. If there is a duplicate data
    * entry in the same folder, it will be automatically numerated.
+   *
+   * If you return undefined or an empty string, the name `item-1` will be used, which will
+   * then be numerated as necessary.
    */
-  computeName: (data: DataType) => string
+  computeName: (data: DataType) => string | undefined
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate

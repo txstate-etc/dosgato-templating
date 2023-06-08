@@ -147,7 +147,7 @@ export interface UITemplateData extends UITemplateBase {
     /**
      * An icon for the cell in all regular rows (not the header).
      */
-    icon?: (data: DataData) => IconOrSVG
+    icon?: (data: DataData) => IconOrSVG | undefined
     /**
      * Set a fixed width for this column
      *

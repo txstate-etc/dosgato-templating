@@ -161,6 +161,16 @@ export interface UITemplateData extends UITemplateBase {
      */
     grow?: number
   }[]
+
+  /**
+   * If you provide custom columns and one of them is the computeName source for this
+   * template, it may be preferred to show the computeName source (e.g. title) instead of
+   * showing the name in the data tree.
+   *
+   * Set this to true to hide the name column. The name will then be placed inside
+   * the dialog in case the user needs to reference it.
+   */
+  hideName?: boolean
 }
 
 /**

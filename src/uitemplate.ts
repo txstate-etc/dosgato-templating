@@ -143,7 +143,7 @@ export interface UITemplateData extends UITemplateBase {
      * If given a function, the result of the function will be placed inside the field
      * without html-encoding, so that you can write your own HTML. Do the encoding yourself.
      */
-    get: string | ((data: DataRecord) => string)
+    get: string | ((data: DataData) => string)
     /**
      * An icon for the cell in all regular rows (not the header).
      */
@@ -172,7 +172,7 @@ export interface UITemplateData extends UITemplateBase {
   nameColumn?: {
     title?: string
     icon?: (data: DataData) => IconOrSVG | undefined
-    get?: string | ((data: DataRecord) => string)
+    get?: string | ((data: DataData) => string)
   }
 }
 

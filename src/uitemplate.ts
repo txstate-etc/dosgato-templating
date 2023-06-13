@@ -163,14 +163,17 @@ export interface UITemplateData extends UITemplateBase {
   }[]
 
   /**
-   * If you provide custom columns and one of them is the computeName source for this
-   * template, it may be preferred to show the computeName source (e.g. title) instead of
-   * showing the name in the data tree.
+   * It may be preferred to show the computeName source (e.g. title) instead of
+   * showing the computed name itself in the leftmost column of the data tree.
    *
-   * Set this to true to hide the name column. The name will then be placed inside
-   * the dialog in case the user needs to reference it.
+   * Provide this option to control the name column. Everything is optional in
+   * case, for example, you only want to control the icon.
    */
-  hideName?: boolean
+  nameColumn?: {
+    title?: string
+    icon?: (data: DataData) => IconOrSVG | undefined
+    get?: string | ((data: DataRecord) => string)
+  }
 }
 
 /**

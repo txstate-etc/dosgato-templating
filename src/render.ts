@@ -281,6 +281,29 @@ export interface APIClient {
      * The `href` property in the returned records should be an absolute URL.
      */
     absolute?: boolean
+    /**
+     * Set a filter to use while building the navigation tree, to limit the amount of pages
+     * returned.
+     *
+     * For example, if pages have a `hideInNav` property, you could check that here to avoid
+     * returning pages that are supposed to be hidden.
+     *
+     * You could always do this yourself after getting the full results, but it will improve
+     * performance to do it earlier.
+     */
+    filter?: (page: PageForNavigation) => boolean | undefined
+    /**
+     * Filter for a specific tag as returned by the template's getTags function in the API
+     * template definition.
+     */
+    tagsAny?: string[]
+    /**
+     * Set a maximum number of children to be displayed in the menu per page.
+     *
+     * For instance, if you set it to 8, no page returned will have more than 8 children. Page
+     * order will determine which 8 make the cut.
+     */
+    maxChildren?: number
   }) => Promise<PageForNavigation[]>
 
   /**

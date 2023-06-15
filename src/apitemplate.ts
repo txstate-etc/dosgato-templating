@@ -103,6 +103,17 @@ export interface APITemplate<DataType> {
   getFulltext?: FulltextGatheringFn<DataType>
 
   /**
+   * Extra filters for this template
+   *
+   * Use this function to return arbitrary tags for your template. These tags will be indexed
+   * and may be used later as a search filter.
+   *
+   * For example, pages may set a 'shownInNav' tag and this could be passed to the getNavigation
+   * function during rendering to return a smaller set of pages for navigation.
+   */
+  getTags?: FulltextGatheringFn<DataType>
+
+  /**
    * The available component list in the main content area can get very long, among others. Therefore, each
    * template may set a displayCategory and any templates that share a displayCategory will be grouped together
    * underneath one tab when a user is presented with a choice of template.

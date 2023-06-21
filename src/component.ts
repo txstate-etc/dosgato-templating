@@ -774,6 +774,11 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
     return (this.url === '/' ? '/.root' : this.url.replace(/\.[^/]+$/, '')) + '.' + extension
   }
 
+  logError (e: Error) {
+    this.hadError = true
+    console.error(`Unrecoverable issue occurred during render of ${this.pageInfo.path}. Page template threw the following error:`, e)
+  }
+
   protected passError (e: Error, path: string) {
     console.warn(`Recoverable issue occured during render of ${this.pageInfo.path}. Component at ${path} threw the following error:`, e)
   }

@@ -302,6 +302,10 @@ export interface UIConfig {
    */
   logo?: IconOrSVG
   /**
+   * Page title for the <head>
+   */
+  title?: string
+  /**
    * If you would like to collect more information about assets from editors, you may provide a dialog
    * here. The data collected will be available when you retrieve assets.
    */

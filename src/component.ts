@@ -254,7 +254,8 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderComponents (components: RenderedComponent[] | string = [], opts?: RenderComponentsOpts) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
     const wrap = opts?.wrap ?? defaultWrap
-    if (opts?.skipBars || opts?.skipEditBars) return components.map((c, indexInArea) => wrap({ ...c, content: c.output, bar: '', indexInArea })).join('')
+    if (opts?.skipContent && !this.editMode) return ''
+    if (opts?.skipBars || opts?.skipEditBars || !this.editMode) return components.map((c, indexInArea) => wrap({ ...c, content: c.output, bar: '', indexInArea })).join('')
     return components
       .map((c, indexInArea) => {
         if (c.component.inheritedFrom && opts?.hideInheritBars) {
@@ -288,7 +289,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     const full = !!(opts?.max && ownedComponentCount >= opts.max)
     const wrap = opts?.wrap ?? defaultWrap
     let output = this.renderComponents(components, { ...opts, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
-    if (!opts?.skipBars && !opts?.skipNewBar) {
+    if (!opts?.skipBars && !opts?.skipNewBar && this.editMode) {
       let bar: string | undefined
       if (full) {
         if (!opts.hideMaxWarning) {

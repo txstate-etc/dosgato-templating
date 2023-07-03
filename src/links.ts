@@ -35,6 +35,7 @@ export interface PageLink {
   siteId: string
   linkId: string
   path: string
+  hash?: string
 }
 
 /**

@@ -302,6 +302,14 @@ export interface UIConfig {
    */
   logo?: IconOrSVG
   /**
+   * Optional function to determine whether the admin UI is running in a non-PROD environment
+   * like QUAL or DEV or STAGING or whatever identifier you want to use.
+   *
+   * The string you return will be visually represented in the UI so that editors are clear about
+   * which environment they are working in.
+   */
+  environmentTitle?: (environmentConfig: any) => string | undefined
+  /**
    * Page title for the <head>
    */
   title?: string

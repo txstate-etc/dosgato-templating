@@ -77,6 +77,7 @@ export interface PageForNavigation {
   href: string
   publishedAt?: Date
   extra: Record<string, any>
+  tags: string[]
   children: this[]
 }
 

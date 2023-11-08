@@ -124,6 +124,37 @@ export interface UITemplate extends UITemplateBase {
   }[]
 }
 
+export interface ExtraDataColumn {
+  /**
+       * A title for the column in header row.
+       */
+  title: string
+  /**
+   * If given a string, will be treated as a dot-separated path within DataData and
+   * the content at that path will be html-encoded and placed inside the field.
+   *
+   * If given a function, the result of the function will be placed inside the field
+   * without html-encoding, so that you can write your own HTML. Do the encoding yourself.
+   */
+  get: string | ((data: DataData) => string)
+  /**
+   * An icon for the cell in all regular rows (not the header).
+   */
+  icon?: (data: DataData) => IconOrSVG | undefined
+  /**
+   * Set a fixed width for this column
+   *
+   * For example, "50px", "12em", or "10vw"
+   */
+  fixed?: string
+  /**
+   * Set a dynamic width for this column as a ratio of the name column
+   *
+   * For example, 0.5 = half the name column, 2 = double the name column
+   */
+  grow?: number
+}
+
 export interface UITemplateData extends UITemplateBase {
   /**
    * Add extra columns between name and published status.
@@ -131,36 +162,7 @@ export interface UITemplateData extends UITemplateBase {
    * Without configuration, only data entry name, published status, and modified info
    * is shown in the list view.
    */
-  columns?: {
-    /**
-     * A title for the column in header row.
-     */
-    title: string
-    /**
-     * If given a string, will be treated as a dot-separated path within DataData and
-     * the content at that path will be html-encoded and placed inside the field.
-     *
-     * If given a function, the result of the function will be placed inside the field
-     * without html-encoding, so that you can write your own HTML. Do the encoding yourself.
-     */
-    get: string | ((data: DataData) => string)
-    /**
-     * An icon for the cell in all regular rows (not the header).
-     */
-    icon?: (data: DataData) => IconOrSVG | undefined
-    /**
-     * Set a fixed width for this column
-     *
-     * For example, "50px", "12em", or "10vw"
-     */
-    fixed?: string
-    /**
-     * Set a dynamic width for this column as a ratio of the name column
-     *
-     * For example, 0.5 = half the name column, 2 = double the name column
-     */
-    grow?: number
-  }[]
+  columns?: ExtraDataColumn[]
 
   /**
    * It may be preferred to show the computeName source (e.g. title) instead of
@@ -174,6 +176,14 @@ export interface UITemplateData extends UITemplateBase {
     icon?: (data: DataData) => IconOrSVG | undefined
     get?: string | ((data: DataData) => string)
   }
+
+  /**
+   * Defines the responsive behavior of the list view, given a tree width, a list of default header IDs, and the
+   * list of extra columns. Returns an array with the IDs of the columns that should be shown at the given tree width.
+   * The last column in the returned list is the one replaced if the user chooses to display a hidden column by selecting
+   * it from the dropdown menu.
+   */
+  responsiveDataColumns?: ((treeWidth: number, defaultHeaders: string[], extraColumns: ExtraDataColumn[]) => string[])
 }
 
 /**

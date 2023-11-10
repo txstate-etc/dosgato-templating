@@ -178,12 +178,10 @@ export interface UITemplateData extends UITemplateBase {
   }
 
   /**
-   * Defines the responsive behavior of the list view, given a tree width, a list of default header IDs, and the
-   * list of extra columns. Returns an array with the IDs of the columns that should be shown at the given tree width.
-   * The last column in the returned list is the one replaced if the user chooses to display a hidden column by selecting
-   * it from the dropdown menu.
+   * Defines the responsive behavior of the list view, given a tree width. Should return an array with the titles of the extra columns that
+   * should be shown at the given tree width, or an empty array if none should be shown. The behavior of the default columns is handled by the admin interface.
    */
-  responsiveDataColumns?: ((treeWidth: number, defaultHeaders: string[], extraColumns: ExtraDataColumn[]) => string[])
+  responsiveDataColumns?: ((treeWidth: number) => string[])
 }
 
 /**

@@ -181,7 +181,7 @@ export interface UITemplateData extends UITemplateBase {
    * Defines the responsive behavior of the list view, given a tree width. Should return an array with the titles of the extra columns that
    * should be shown at the given tree width, or an empty array if none should be shown. The behavior of the default columns is handled by the admin interface.
    */
-  responsiveDataColumns?: ((treeWidth: number) => string[])
+  responsiveDataColumns?: (treeWidth: number) => string[]
 }
 
 /**
@@ -346,6 +346,11 @@ export interface UIConfig {
      * Provide an array to be given multiple boxes.
      */
     display?: AssetMetaDisplay | AssetMetaDisplay[]
+  }
+
+  trainings?: {
+    noEdit?: boolean
+    hide?: boolean
   }
 
   tracing?: TracingInterface

@@ -36,6 +36,13 @@ export interface PictureAttributes {
   src: string
   /** string appropriate for the srcset attribute of the default <img> tag, or use widths array to reconstruct */
   srcset: string
+  /**
+   * When an image link cannot be found, we still return the src and srcset with a non-working path so that the
+   * user can more easily determine 1) that there was an image that is now broken and 2) where the image used
+   * to be.
+   * This attribute will be set to true in case the render needs any additional logic for broken links
+   */
+  broken: boolean
   /** a list of available widths in case you want to filter some out and recreate the srcset */
   widths: PictureResize[]
   /** alternative text stored with the image in its asset repository, may be overridden by local alt text */

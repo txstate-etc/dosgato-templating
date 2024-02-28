@@ -565,6 +565,7 @@ export interface RenderAreaEditBarOpts extends Omit<Omit<EditBarOpts, 'label'>, 
 
 export interface NewBarOpts extends BarOpts {
   disabled?: boolean
+  disableAddToTop?: boolean
 }
 
 export interface RenderComponentsWrapParams {

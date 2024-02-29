@@ -122,6 +122,25 @@ export interface UITemplate extends UITemplateBase {
      */
     shouldAppear?: (data: PageData, path: string) => boolean
   }[]
+
+  /**
+   * Customize the device preview dropdown. Only applies to page templates. Default is to show
+   * Mobile and Desktop in preview mode only.
+   */
+  devicePreview?: {
+    /**
+     * Set this to an object to customize the sizes available on the preview device dropdown.
+     * Leave width undefined to use all available space. The first entry marked default will be
+     * active on first page load. If none are default, the largest is default.
+     * Example: [{ label: 'Mobile', width: 400 }, { label: 'Desktop', default: true }]
+     */
+    sizes?: { label: string, width?: number, default?: boolean }[]
+    /**
+     * If your template is heavily mobile focused, you may want editors to have the device
+     * dropdown while editing, in addition to previewing. Set this true to enable that.
+     */
+    showWhileEditing?: boolean
+  }
 }
 
 export interface ExtraDataColumn {

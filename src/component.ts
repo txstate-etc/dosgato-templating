@@ -253,13 +253,14 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   renderComponents (components: RenderedComponent[] | string = [], opts?: RenderComponentsOpts) {
     if (!Array.isArray(components)) components = this.renderedAreas.get(components) ?? []
+    const siblings = components.map(c => c.component)
     const wrap = opts?.wrap ?? defaultWrap
     if (opts?.skipContent && !this.editMode) return ''
-    if (opts?.skipBars || opts?.skipEditBars || !this.editMode) return components.map((c, indexInArea) => wrap({ ...c, content: c.output, bar: '', indexInArea })).join('')
+    if (opts?.skipBars || opts?.skipEditBars || !this.editMode) return components.map((c, indexInArea) => wrap({ ...c, content: c.output, bar: '', indexInArea, siblings })).join('')
     return components
       .map((c, indexInArea) => {
         if (c.component.inheritedFrom && opts?.hideInheritBars) {
-          return opts.skipContent ? '' : wrap({ ...c, content: c.output, bar: '', indexInArea })
+          return opts.skipContent ? '' : wrap({ ...c, content: c.output, bar: '', indexInArea, siblings })
         } else {
           const bar = c.component.editBar({
             ...opts?.editBarOpts,
@@ -267,7 +268,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
             extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
           })
           const content = opts?.skipContent ? '' : c.output
-          return wrap({ output: bar + content, content, bar, component: c.component, indexInArea })
+          return wrap({ output: bar + content, content, bar, component: c.component, indexInArea, siblings })
         }
       }).join('')
   }
@@ -298,7 +299,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
       } else {
         bar = this.newBar(areaName, opts?.newBarOpts)
       }
-      if (bar != null) output += wrap({ output: bar, content: '', bar, indexInArea: components.length })
+      if (bar != null) output += wrap({ output: bar, content: '', bar, indexInArea: components.length, siblings: components.map(c => c.component) })
     }
     return output
   }
@@ -611,6 +612,21 @@ export interface RenderComponentsWrapParams {
    * Will be undefined for the new bar, so check that it is not null.
    */
   component?: Component
+  /**
+   * Contains all the components in the same area as the component being rendered.
+   *
+   * Use this if you need to wrap multiple components together inside the same
+   * box. For instance, if you have several components of the same type in a row,
+   * perhaps you want them to automatically appear side by side in a flexbox.
+   *
+   * Your wrap function could inspect the components before and after the current
+   * component, based on indexInArea, and decide to open a div when the preceding is
+   * not the right type and the following is, then close the div when the preceding
+   * is the right type and the following is not.
+   *
+   * Will be defined when rendering the new bar.
+   */
+  siblings: Component[]
 }
 
 export interface RenderComponentsOpts {

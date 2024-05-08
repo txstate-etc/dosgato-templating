@@ -433,6 +433,16 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   // it's also undefined for page templates but I'm intentionally making it non-optional
   // because it would be non-sensical to try to use in a page template anyway
   indexInArea!: number
+  /**
+   * the full array of components in the same area as this component, including self
+   *
+   * empty for page component
+   */
+  siblings!: Component[]
+  /** the component before this one inside the area, null if this component is first */
+  prevSibling?: Component
+  /** the component after this one inside the area, null if this component is last */
+  nextSibling?: Component
 
   /**
    * For logging errors during rendering without crashing the render. If your fetch, setContext,

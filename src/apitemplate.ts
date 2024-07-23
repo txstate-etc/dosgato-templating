@@ -57,9 +57,9 @@ export interface ComponentExtras extends PageExtras {
   page: PageData
   /**
    * The component data before validation. Will be present during migration but equal to the
-   * data already being passed to the migration.
+   * data already being passed to the migration. Undefined for a new component.
    */
-  currentData: ComponentData
+  currentData?: ComponentData
 }
 export interface DataExtras {
   /** A function for executing a graphql query to acquire more information than is already at hand. */
@@ -70,6 +70,11 @@ export interface DataExtras {
   dataFolderId?: string
   /** The id of the data entry itself. NOTE: will be null during page creation. */
   dataId?: string
+  /**
+   * The data before validation. Will be present during migration but equal to the
+   * data already being passed to the migration. Undefined for a new data entry.
+   */
+  currentData?: DataData
 }
 
 /**

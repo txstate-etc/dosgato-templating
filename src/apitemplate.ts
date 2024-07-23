@@ -39,15 +39,27 @@ export interface PageExtras {
   linkId?: string
   /** The name the page has or will have. NOTE: looking the page up by name will not work during page creation. */
   name: string
+  /**
+   * The full page data before the validation/migration in case validating depends on the previous
+   * state of the page.
+   *
+   * Will be undefined during page creations, and equal to the data already being passed to a migration.
+   */
+  page?: PageData
 }
 export interface ComponentExtras extends PageExtras {
+  /** The path within the page data to the component currently being evaluated. */
+  path: string
   /**
-   * The full page data in case validating or migrating a component depends on state
+   * The full page data before the validation/migration in case validating depends on state
    * elsewhere in the page.
    */
   page: PageData
-  /** The path within the page data to the component currently being evaluated. */
-  path: string
+  /**
+   * The component data before validation. Will be present during migration but equal to the
+   * data already being passed to the migration.
+   */
+  currentData: ComponentData
 }
 export interface DataExtras {
   /** A function for executing a graphql query to acquire more information than is already at hand. */

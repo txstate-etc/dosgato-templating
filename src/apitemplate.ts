@@ -40,10 +40,10 @@ export interface PageExtras {
   /** The name the page has or will have. NOTE: looking the page up by name will not work during page creation. */
   name: string
   /**
-   * The full page data before the validation/migration in case validating depends on the previous
+   * The full page data before the validation in case validating depends on the previous
    * state of the page.
    *
-   * Will be undefined during page creations, and equal to the data already being passed to a migration.
+   * Will be undefined for page creation or during migration.
    */
   page?: PageData
 }
@@ -56,8 +56,7 @@ export interface ComponentExtras extends PageExtras {
    */
   page: PageData
   /**
-   * The component data before validation. Will be present during migration but equal to the
-   * data already being passed to the migration. Undefined for a new component.
+   * The component data before validation. Undefined for a new component or during migration.
    */
   currentData?: ComponentData
 }
@@ -71,8 +70,7 @@ export interface DataExtras {
   /** The id of the data entry itself. NOTE: will be null during page creation. */
   dataId?: string
   /**
-   * The data before validation. Will be present during migration but equal to the
-   * data already being passed to the migration. Undefined for a new data entry.
+   * The data before validation. Undefined for a new data entry or during migration.
    */
   currentData?: DataData
 }

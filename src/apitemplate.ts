@@ -22,7 +22,7 @@ export interface ValidationFeedback {
  * do advanced logic when validating or migrating data, e.g. looking up a name in the
  * API to make sure it hasn't been used already.
  */
-export interface PageExtras {
+export interface PageExtras <DataType = PageData> {
   /** A function for executing a graphql query to acquire more information than is already at hand. */
   query: GraphQLQueryFn
   /** The site id in which the page lives or is being created. Null if we are validating creation of a site. */
@@ -45,9 +45,9 @@ export interface PageExtras {
    *
    * Will be undefined for page creation or during migration.
    */
-  page?: PageData
+  page?: DataType
 }
-export interface ComponentExtras extends PageExtras {
+export interface ComponentExtras <DataType = ComponentData> extends PageExtras {
   /** The path within the page data to the component currently being evaluated. */
   path: string
   /**
@@ -58,9 +58,9 @@ export interface ComponentExtras extends PageExtras {
   /**
    * The component data before validation. Undefined for a new component or during migration.
    */
-  currentData?: ComponentData
+  currentData?: DataType
 }
-export interface DataExtras {
+export interface DataExtras<DataType = DataData> {
   /** A function for executing a graphql query to acquire more information than is already at hand. */
   query: GraphQLQueryFn
   /** The id of the dataroot the entry lives in or will be placed in. */
@@ -72,7 +72,7 @@ export interface DataExtras {
   /**
    * The data before validation. Undefined for a new data entry or during migration.
    */
-  currentData?: DataData
+  currentData?: DataType
 }
 
 /**
@@ -191,7 +191,7 @@ export interface APIComponentTemplate<DataType extends ComponentData = any> exte
    *
    * See the ComponentExtras type to see all the contextual information you'll have available.
    */
-  validate?: (data: DataType, extras: ComponentExtras) => Promise<ValidationFeedback[]>
+  validate?: (data: DataType, extras: ComponentExtras<DataType>) => Promise<ValidationFeedback[]>
 
   /**
    * Each template must provide a list of migrations for upgrading the data schema over time.
@@ -212,7 +212,7 @@ export interface APIPageTemplate<DataType extends PageData = any> extends APITem
   /**
    * Page template implementations do not receive a path like component templates do.
    */
-  validate?: (data: DataType, extras: PageExtras) => Promise<ValidationFeedback[]>
+  validate?: (data: DataType, extras: PageExtras<DataType>) => Promise<ValidationFeedback[]>
 
   migrations?: PageMigration<DataType>[]
 
@@ -260,7 +260,7 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
    * the conflicting entry is deleted. Editing this data entry again will remove the "-1" because
    * of the lack of conflict.
    */
-  validate?: (data: DataType, extras: DataExtras, nameIsTaken: boolean) => Promise<ValidationFeedback[]>
+  validate?: (data: DataType, extras: DataExtras<DataType>, nameIsTaken: boolean) => Promise<ValidationFeedback[]>
 
   migrations?: DataMigration<DataType>[]
 

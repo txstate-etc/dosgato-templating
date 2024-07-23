@@ -262,11 +262,13 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
         if (c.component.inheritedFrom && opts?.hideInheritBars) {
           return opts.skipContent ? '' : wrap({ ...c, content: c.output, bar: '', indexInArea, siblings })
         } else {
-          const bar = c.component.editBar({
-            ...opts?.editBarOpts,
-            label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
-            extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
-          })
+          const bar = c.component.renderIncludesEditBar
+            ? ''
+            : c.component.editBar({
+              ...opts?.editBarOpts,
+              label: typeof opts?.editBarOpts?.label === 'function' ? opts.editBarOpts.label(c.component) : opts?.editBarOpts?.label,
+              extraClass: typeof opts?.editBarOpts?.extraClass === 'function' ? opts.editBarOpts.extraClass(c.component) : opts?.editBarOpts?.extraClass
+            })
           const content = opts?.skipContent ? '' : c.output
           return wrap({ output: bar + content, content, bar, component: c.component, indexInArea, siblings })
         }
@@ -346,6 +348,12 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Its edit bar will not have a pencil icon.
    */
   noData = false
+
+  /**
+   * Override with `true` to indicate that this template renders its own edit bar
+   * so that the parent component will avoid rendering it
+   */
+  renderIncludesEditBar = false
 
   /**
    * Components may override this function to give their new bars a custom

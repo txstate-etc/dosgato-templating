@@ -296,6 +296,13 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
    * then be numerated as necessary.
    */
   computeName: (data: DataType) => string | undefined
+
+  /**
+   * For some types of data, the concept of publishing will be confusing for users. In these
+   * cases, you can set this to true and all entries will be automatically published to latest
+   * on every change.
+   */
+  nopublish: boolean
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate

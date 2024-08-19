@@ -302,7 +302,7 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
    * cases, you can set this to true and all entries will be automatically published to latest
    * on every change.
    */
-  nopublish: boolean
+  nopublish?: boolean
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate

@@ -151,6 +151,17 @@ export interface APITemplate<DataType> {
   onCopy?: (data: DataType, pageCopy: boolean, workspace: Record<string, any>) => void
 
   /**
+   * This is very similar to onCopy, but it is called when a page is being imported instead of
+   * copied. In this case it is possible but not guaranteed that the original page still exists.
+   *
+   * Usually you want to avoid regenerating ids during an import because export/import is about
+   * archiving and restoring pages, so we'd prefer to restore them exactly as they were. However,
+   * since the original can still exist, anything that MUST be globally unique should be regenerated,
+   * just in case.
+   */
+  onImport?: (data: DataType, workspace: Record<string, any>) => void
+
+  /**
    * The available component list in the main content area can get very long, among others. Therefore, each
    * template may set a displayCategory and any templates that share a displayCategory will be grouped together
    * underneath one tab when a user is presented with a choice of template.

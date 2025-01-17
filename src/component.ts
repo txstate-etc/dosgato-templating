@@ -98,7 +98,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * The extension will NOT include the preceding dot. In the case of an extended extension like
    * '.js.map', you should receive 'js.map'.
    */
-  shouldFetchVariation (extension: string) { return extension === 'html' }
+  shouldFetchVariation (extension: string): boolean { return extension === 'html' }
 
   /**
    * Some components may be inheritable to subpages within the same site. For instance, a site's

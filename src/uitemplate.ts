@@ -325,9 +325,14 @@ export interface UIConfig {
     logout?: (environmentConfig: any, token: string) => void
   }
   /**
-   * Optional CMS logo to be placed in the top left of the admin UI.
+   * Optional CMS logo to be placed in the top left of the admin UI. Function can be used if the logo depends
+   * on the environment.
    */
-  logo?: IconOrSVG
+  logo?: IconOrSVG | (() => IconOrSVG) | undefined
+  /**
+   * Optional favicon. Function can be used if the logo depends on the environment.
+   */
+  favicon?: string | ((environmentConfig: any) => string) | undefined
   /**
    * Optional function to determine whether the admin UI is running in a non-PROD environment
    * like QUAL or DEV or STAGING or whatever identifier you want to use.

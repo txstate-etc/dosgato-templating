@@ -328,9 +328,9 @@ export interface UIConfig {
    * Optional CMS logo to be placed in the top left of the admin UI. Function can be used if the logo depends
    * on the environment.
    */
-  logo?: IconOrSVG | (() => IconOrSVG) | undefined
+  logo?: IconOrSVG | ((environmentConfig: any) => IconOrSVG) | undefined
   /**
-   * Optional favicon. Function can be used if the logo depends on the environment.
+   * Optional favicon. Function can be used if the favicon depends on the environment.
    */
   favicon?: string | ((environmentConfig: any) => string) | undefined
   /**

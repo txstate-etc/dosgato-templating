@@ -203,7 +203,7 @@ export interface APIClient {
    *
    * Helpful for evaluating links when you need more than just an href like you'd get from `resolveLink`.
    */
-  getPageNoData: ({ link }: { link?: string | PageLink }) => Promise<PageRecordNoData | undefined>
+  getPageNoData: ({ link }: { link: string | PageLink }) => Promise<PageRecordNoData & { title: string } | undefined>
 
   /** Get all ancestor pages of a specific page. First array element will be the pagetree root page. */
   getAncestors: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord<PageData>[]>

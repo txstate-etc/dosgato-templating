@@ -478,7 +478,7 @@ export interface SiteInfo {
   }
 }
 
-export interface PageRecord<DataType extends PageData = PageData> {
+export interface PageRecordNoData {
   id: string
   name: string
   linkId: string
@@ -487,9 +487,11 @@ export interface PageRecord<DataType extends PageData = PageData> {
   modifiedAt: Date
   publishedAt?: Date
   path: string
-  data: DataType
   pagetree: { id: string }
   site: SiteInfo
+}
+export interface PageRecord<DataType extends PageData = PageData> extends PageRecordNoData {
+  data: DataType
 }
 
 export interface PageRecordOptionalData<DataType extends PageData = PageData> extends Omit<PageRecord<DataType>, 'data'> {

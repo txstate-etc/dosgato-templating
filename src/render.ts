@@ -1,5 +1,5 @@
 import { htmlEncode, isBlank, isNotEmpty } from 'txstate-utils'
-import type { ContextBase, DataRecord, PageData, PageRecord, PageRecordOptionalData } from './component.js'
+import type { ContextBase, DataRecord, PageData, PageRecord, PageRecordNoData, PageRecordOptionalData } from './component.js'
 import type { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 /**
@@ -197,6 +197,13 @@ export interface APIClient {
    * Will be dataloaded.
    */
   getPage: ({ id, path, link }: { id?: string, path?: string, link?: string | PageLink }) => Promise<PageRecord<PageData> & { title: string } | undefined>
+
+  /**
+   * Get the page record for a page, but without data.
+   *
+   * Helpful for evaluating links when you need more than just an href like you'd get from `resolveLink`.
+   */
+  getPageNoData: ({ link }: { link?: string | PageLink }) => Promise<PageRecordNoData | undefined>
 
   /** Get all ancestor pages of a specific page. First array element will be the pagetree root page. */
   getAncestors: ({ id, path }: { id?: string, path?: string }) => Promise<PageRecord<PageData>[]>

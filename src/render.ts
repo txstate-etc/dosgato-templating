@@ -1,5 +1,5 @@
 import { htmlEncode, isBlank, isNotEmpty } from 'txstate-utils'
-import type { ContextBase, DataRecord, PageData, PageRecord, PageRecordNoData, PageRecordOptionalData } from './component.js'
+import type { ContextBase, DataRecord, PageData, PageRecord, PageRecordNoData, PageRecordOptionalData, SiteInfo } from './component.js'
 import type { AssetFolderLink, AssetLink, DataFolderLink, DataLink, LinkDefinition, PageLink } from './links.js'
 
 /**
@@ -147,7 +147,7 @@ export interface APIClient {
    * broken, but if a site has launch info that is simply disabled, getHref will still work. Any links generated
    * would work as soon as the launch info is enabled.
    */
-  getHref: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => string | undefined
+  getHref: (page: { path: string, site: SiteInfo, pagetree: { id: string } }, opts?: { absolute?: boolean, extension?: string }) => string | undefined
 
   /**
    * Exactly like getHref except it also returns whether or not the link it's returning is actually
@@ -162,7 +162,7 @@ export interface APIClient {
    * Based on that boolean, components can be configured to render a shiny red warning message in edit mode
    * so that editors can quickly identify broken links on their pages.
    */
-  getHrefPlus: (page: PageRecordOptionalData, opts?: { absolute?: boolean, extension?: string }) => { href: string | undefined, broken: boolean }
+  getHrefPlus: (page: { path: string, site: SiteInfo, pagetree: { id: string } }, opts?: { absolute?: boolean, extension?: string }) => { href: string | undefined, broken: boolean }
 
   /**
    * Get assets by link

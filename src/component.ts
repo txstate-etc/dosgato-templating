@@ -229,22 +229,32 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   abstract render (): string
 
   /**
+   * If you are rendering a variation for a component that has areas and children,
+   * you can call Component.renderVariation(extension, this.renderedAreas) to help you easily
+   * render the areas and children inside whatever wrapper content you need.
+   */
+  static renderVariation (extension: string, renderedAreas: Map<string, RenderedComponent[]>) {
+    return Array.from(renderedAreas.values()).flatMap(ras => ras.map(ra => ra.output)).join('')
+  }
+
+  /**
    * Sometimes pages are requested with an alternate extension like .rss or .ics. In these
    * situations, each component should consider whether it should output anything. For
    * instance, if the extension is .rss and a component represents an article, it should
    * probably output an RSS item. If you don't recognize the extension, just return
-   * super.renderVariation(extension, renderedAreas) to give your child components a chance to
+   * Component.renderVariation(extension, this.renderedAreas) to give your child components a chance to
    * respond, or return empty string if you want your child components to be silent in all
    * cases.
    *
+   * If you implement this function to add content for a specific extension, you should also
+   * probably override `shouldFetchVariation` to return true for that extension. Also remember
+   * to use Component.renderVariation(extension, this.renderedAreas) to render your child components.
+   *
    * The extension will NOT include the preceding dot. In the case of an extended extension like
    * '.js.map', you will receive 'js.map'.
-   *
-   * This function will be run after the fetch phase. The context and html rendering phases
-   * will be skipped.
    */
   renderVariation (extension: string) {
-    return Array.from(this.renderedAreas.values()).flatMap(ras => ras.map(ra => ra.output)).join('')
+    return Component.renderVariation(extension, this.renderedAreas)
   }
 
   /**

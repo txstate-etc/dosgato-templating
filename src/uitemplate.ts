@@ -379,6 +379,15 @@ export interface UIConfig {
 
   tracing?: TracingInterface
 
+  /** Links that appear in the profile menu in the upper right corner of the editing environment. A logout
+   * menu is automatically added.
+   */
+  profileMenuLinks?: {
+    label: string
+    url: string
+    icon?: IconOrSVG
+  }[]
+
   /** Non-Awaited async call for logging interface interactions if defined.
    * Useful for defining how to log form submissions, interaction clicks, page edits, or state
    * changes of different interfaces. Can be directed to separate endpoint for APM logging as

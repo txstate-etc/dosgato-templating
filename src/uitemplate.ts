@@ -328,7 +328,7 @@ export interface UIConfig {
    * Optional CMS logo to be placed in the top left of the admin UI. Function can be used if the logo depends
    * on the environment.
    */
-  logo?: IconOrSVG | ((environmentConfig: any) => IconOrSVG) | undefined
+  logo?: IconOrSVG | ((environmentConfig: any) => IconOrSVG | undefined) | undefined
   /**
    * Optional favicon. Function can be used if the favicon depends on the environment.
    */
@@ -341,6 +341,14 @@ export interface UIConfig {
    * which environment they are working in.
    */
   environmentTitle?: (environmentConfig: any) => string | undefined
+  /**
+   * Optional function to determine whether the admin UI is running in a non-PROD environment
+   * like QUAL or DEV or STAGING using a distinctive background color for the top navigation area.
+   *
+   * Lighter colors work best if used in conjunction with the environmentTitle function and to maintain
+   * sufficient contrast with the text and icons.
+   */
+  environmentBackgroundColor?: (environmentConfig: any) => string | undefined
   /**
    * Page title for the <head>
    */

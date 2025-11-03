@@ -36,6 +36,7 @@ export interface PageLink {
   linkId: string
   path: string
   hash?: string
+  query?: string
 }
 
 /**

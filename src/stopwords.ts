@@ -141,6 +141,8 @@ export const stopwords: Record<string, boolean> = {
   textarea: true,
   title: true,
   onclick: true,
+  www: true,
+  com: true,
   // LinkDefinition
   siteId: true,
   path: true,
@@ -149,3 +151,5 @@ export const stopwords: Record<string, boolean> = {
   linkId: true,
   url: true
 }
+
+export const stopwordSet = new Set(Object.keys(stopwords))

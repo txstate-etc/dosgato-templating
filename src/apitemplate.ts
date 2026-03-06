@@ -1,6 +1,6 @@
 import type { ComponentData, DataData, PageData } from './component.js'
 import { type LinkDefinition } from './links.js'
-import { stopwords } from './stopwords.js'
+import { stopwordSet } from './stopwords.js'
 
 export type APITemplateType = 'page' | 'component' | 'data'
 
@@ -373,10 +373,10 @@ export type GraphQLQueryFn = <T> (query: string, variables?: any) => Promise<T>
 export function getKeywords (text?: string, options?: { stopwords?: boolean }) {
   if (!text) return []
   return Array.from(new Set(text
-    .toLocaleLowerCase()
     .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .toLocaleLowerCase()
     .split(/[^\w-]+/)
     .flatMap(word => word.includes('-') ? word.split('-').concat(word.replace('-', '')) : [word])
-    .filter(word => word.length > 2 && (options?.stopwords === false || !stopwords[word]) && isNaN(Number(word)))
+    .filter(word => word.length > 2 && (options?.stopwords === false || !stopwordSet.has(word)) && isNaN(Number(word)))
   ))
 }

@@ -252,6 +252,12 @@ export interface APIPageTemplate<DataType extends PageData = any> extends APITem
    * nested containers are in between.
    */
   disallowComponents?: string[]
+
+  /**
+   * A page template can specify that it belongs to a certain theme. This is just informational and can be used
+   * by the front end to group templates by theme. It has no bearing on the actual rendering of the page.
+   */
+  templateTheme?: string
 }
 
 export interface APIDataTemplate<DataType extends DataData = any> extends APITemplate<DataType> {

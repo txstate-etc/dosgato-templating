@@ -1,6 +1,5 @@
 import type { ComponentData, DataData, PageData } from './component.js'
 import { type LinkDefinition } from './links.js'
-import { stopwordSet } from './stopwords.js'
 
 export type APITemplateType = 'page' | 'component' | 'data'
 
@@ -23,7 +22,7 @@ export interface ValidationFeedback {
  * API to make sure it hasn't been used already.
  */
 export interface PageExtras <DataType = PageData> {
-  /** A function for executing a graphql query to acquire more information than is already at hand. */
+  /** A function for executing a graphql query to acquire more information than is already at hand. Queries are executed by the system user, so be careful with it. */
   query: GraphQLQueryFn
   /** The site id in which the page lives or is being created. Null if we are validating creation of a site. */
   siteId?: string
@@ -365,18 +364,3 @@ export type AnyMigration = ComponentMigration | PageMigration | DataMigration
 export type LinkGatheringFn<DataType> = (data: DataType) => (LinkDefinition | string | undefined)[]
 export type FulltextGatheringFn<DataType> = (data: DataType) => (string | undefined)[]
 export type GraphQLQueryFn = <T> (query: string, variables?: any) => Promise<T>
-
-/**
- * This function is used by API template definitions to help them identify all the searchable
- * words in a large block of text and return them for indexing.
- */
-export function getKeywords (text?: string, options?: { stopwords?: boolean }) {
-  if (!text) return []
-  return Array.from(new Set(text
-    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-    .toLocaleLowerCase()
-    .split(/[^\w-]+/)
-    .flatMap(word => word.includes('-') ? word.split('-').concat(word.replace('-', '')) : [word])
-    .filter(word => word.length > 2 && (options?.stopwords === false || !stopwordSet.has(word)) && isNaN(Number(word)))
-  ))
-}

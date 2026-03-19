@@ -27,21 +27,21 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * Do NOT mutate data received from the API as it may be cached and given to other
    * Component instances that run the same type of query.
    */
-  api!: APIClient
+  declare api: APIClient
 
   /**
    * This property will be set during page render and you may refer to it at any time to
    * determine whether you are doing your work in edit mode or regular rendering mode.
    * The editBar and newBar methods will automatically use it to blank out the editing UI.
    */
-  editMode: boolean
+  declare editMode: boolean
 
   /**
    * The extension of the variation currently being rendered.
    *
    * See 'renderVariation' and 'variationsToFetch' for more discussion of variations.
    */
-  extension: string
+  declare extension: string
 
   /**
    * When hydrating an inherited component, the renderer will set this to the id of the page it
@@ -54,7 +54,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * This property is also used to alter the edit bar. Inherited components may never be edited
    * except on their original page, so the edit bar will render with a link to the original page.
    */
-  inheritedFrom?: string
+  declare inheritedFrom?: string
 
   /**
    * The first phase of rendering a component is the fetch phase. Each component may
@@ -110,7 +110,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * The inherited components will be added to the appropriate area's array in the renderedAreas
    * parameter of your render function.
    */
-  registerInherited!: (
+  declare registerInherited: (
     /**
      * The area in which to place the inherited components. It doesn't matter where you found them.
      */
@@ -184,7 +184,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * method to prepare editor-provided HTML for later rendering. It will do things like find and
    * resolve link definitions in the internal dosgato format.
    */
-  fetchRichText!: (html: string | undefined, opts?: { absolute?: boolean }) => Promise<void>
+  declare fetchRichText: (html: string | undefined, opts?: { absolute?: boolean }) => Promise<void>
 
   /**
    * This function will be provided by the rendering server and should be used during the render
@@ -210,7 +210,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * If this.data.title is non-blank, the rich text will be balanced below it, but if it is blank,
    * it will be balanced at the level the title would have had.
    */
-  renderRichText!: (html: string | undefined, opts?: { headerLevel?: number, advanceHeader?: string }) => string
+  declare renderRichText: (html: string | undefined, opts?: { headerLevel?: number, advanceHeader?: string }) => string
 
   /**
    * When we give editors the ability to enter raw HTML, we still need to minimally process it to
@@ -218,7 +218,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * to muck around with headers or links, so this function will be provided by the render server
    * and will only do the parsing and reconstruction part
    */
-  renderRawHTML!: (html: string | undefined) => string
+  declare renderRawHTML: (html: string | undefined) => string
 
   /**
    * The final phase of rendering a component is the render phase. This step is BOTTOM-UP -

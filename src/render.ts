@@ -32,9 +32,9 @@ export interface PictureResize {
 }
 
 export interface PictureAttributes {
-  /** string appropriate for the src attribute of the default <img> tag */
+  /** string appropriate for the src attribute of the default `<img>` tag */
   src: string
-  /** string appropriate for the srcset attribute of the default <img> tag, or use widths array to reconstruct */
+  /** string appropriate for the srcset attribute of the default `<img>` tag, or use widths array to reconstruct */
   srcset: string
   /**
    * When an image link cannot be found, we still return the src and srcset with a non-working path so that the
@@ -51,11 +51,11 @@ export interface PictureAttributes {
   width: number
   /** the original intrinsic height of the image uploaded by the editor */
   height: number
-  /** a list of alternate formats like AVIF or WEBP and their resizes, useful for creating <source> tags */
+  /** a list of alternate formats like AVIF or WEBP and their resizes, useful for creating `<source>` tags */
   alternates: {
-    /** the mime type of this alternate source, useful for the type attribute on a <source> tag */
+    /** the mime type of this alternate source, useful for the type attribute on a `<source>` tag */
     mime: string
-    /** the full srcset for the <source> tag, or use widths array to reconstruct */
+    /** the full srcset for the `<source>` tag, or use widths array to reconstruct */
     srcset: string
     /** a list of available widths in case you want to filter some out and recreate the srcset */
     widths: PictureResize[]
@@ -182,7 +182,7 @@ export interface APIClient {
 
   /**
    * This function will retrieve information about an image to help you construct responsive HTML
-   * for a <picture> element including the <img> and all <source> tags.
+   * for a `<picture>` element including the `<img>` and all `<source>` tags.
    *
    * The alt text it returns will be the default alternative text from the asset repository. Alt
    * text gathered from a template's dialog should generally take precedence (though the dialog may

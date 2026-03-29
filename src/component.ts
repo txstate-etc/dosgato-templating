@@ -192,8 +192,8 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    * left open to protect overall page integrity, and fix header levels for accessibility.
    *
    * For instance, an editor supplies a title to be placed above some rich editor content. The
-   * title uses an <h2>, so the headers inside the rich editor content should start at <h3> and
-   * should not use <h1> or <h2>.
+   * title uses an `<h2>`, so the headers inside the rich editor content should start at `<h3>` and
+   * should not use `<h1>` or `<h2>`.
    *
    * Setting headerLevel: 3 instructs the renderRichText function to analyze and rebalance the header
    * structure of the content so that if it had an h2, it woud be replaced with an h3. Additionally,
@@ -694,7 +694,7 @@ export interface RenderComponentsOpts {
   skipContent?: boolean
   /**
    * Provide a function that wraps each component, e.g.
-   * ({ output }) => `<li>${output}</li>`
+   * `({ output }) => \`<li>${output}</li>\``
    *
    * Wrap receives a lot of optional paramaters so that you can customize the behavior. For
    * instance, you may want to wrap the content but not the edit bar, or vice versa. See
@@ -786,7 +786,7 @@ export abstract class Page<DataType extends PageData = any, FetchedType = any, R
   /**
    * This is a bunch of javascript and CSS and meta tags managed by the DosGato engine. It will
    * be filled by the rendering server and your render function for your page template
-   * should place include it in the <head> element
+   * should place include it in the `<head>` element
    */
   headContent!: string
 

@@ -53,7 +53,7 @@ export interface UITemplateBase {
    * during render. For instance, to set the id on an HTML element for reference by other
    * components or code.
    *
-   * If your component has a dialog, dosgato-dialog has a <FieldIdentifier> component for this;
+   * If your component has a dialog, dosgato-dialog has a `<FieldIdentifier>` component for this;
    * it's invisible but either creates or maintains a random string.
    *
    * If your component has no dialog but still needs an identifier, you can name a property
@@ -350,7 +350,7 @@ export interface UIConfig {
    */
   environmentBackgroundColor?: (environmentConfig: any) => string | undefined
   /**
-   * Page title for the <head>
+   * Page title for the `<head>`
    */
   title?: string
   /**

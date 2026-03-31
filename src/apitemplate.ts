@@ -106,15 +106,32 @@ export interface APITemplate<DataType> {
   getLinks?: LinkGatheringFn<DataType>
 
   /**
-   * Each template must provide the text from any text or rich editor data it possesses, so that
-   * the text can be decomposed into words and indexed for fulltext searches. Any text returned
-   * by this function will also be scanned for links.
-   * Examples of text to include would be any text from data that's rendered as visible text content
+   * Each template must provide the plain text from its data so that it can be decomposed into
+   * words and indexed for fulltext searches. Any text returned by this function will also be
+   * scanned for links.
+   *
+   * Examples of text to include would be any plain text data that's rendered as visible content
    * but not things like dates and times.
+   *
+   * Rich text / HTML content should be returned via `getHtml` instead. Markup in `getFulltext`
+   * results will be indexed as-is, meaning tags and attributes will pollute the index.
+   *
    * @note You do not need to filter the text elements returned to ensure they're defined as that
    * can be done by the routine that calls `getFulltext`.
    */
   getFulltext?: FulltextGatheringFn<DataType>
+
+  /**
+   * Return any HTML content from your template data so it can be parsed for indexing. The
+   * system will use cheerio to strip the markup and index the remaining text for fulltext
+   * search, and will also extract link targets (e.g. href attributes) before removing tags.
+   *
+   * This is preferable to stripping HTML yourself and returning it in getFulltext, because
+   * if you strip the markup yourself you'd also need to remember to extract and return links
+   * separately in getLinks. By returning the raw HTML here, both text and links are handled
+   * automatically in one place.
+   */
+  getHtml?: FulltextGatheringFn<DataType>
 
   /**
    * Extra filters for this template

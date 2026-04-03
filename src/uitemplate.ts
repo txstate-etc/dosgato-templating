@@ -233,9 +233,13 @@ export interface TracingInterface {
 }
 
 export interface BaseEvent {
-  /** The larger UI area the user is interacting with that the event is emitted from.
-   * @example 'ActionPanel', 'PageEditor', 'ComponentDialog' */
-  eventType: string // How about renaming to `emitterContext`?
+  /**
+   * The name of the UI component that is recording the event. This should help you track
+   * down where the event is being logged in the code.
+   *
+   * @example 'ActionPanel', 'PageEditor', 'ComponentDialog'
+   */
+  eventType: string
 
   /** The specific action the user took. Typically the label for the element that emits
    * the event.
@@ -243,29 +247,49 @@ export interface BaseEvent {
   action: string
 
   /** Additional data points specific to a particular event type's context. These should
-   * be significant enough to understanding the event to merrit adding additional columns
+   * be significant enough to understanding the event to merit adding additional columns
    * in tools like elastic-search.
-   * @warning This is NOT a catch-all property.
+   * @warning This is NOT a catch-all property. It should be used for metrics an analytics
+   * report would be likely to filter or group by.
    * @example { hiddenLabel: action.hiddenLabel } // The aria label for an action element. */
   additionalProperties?: Record<string, string | undefined>
 }
 
-/** Events triggered by user interactions with interface elements in DosGato. This interface
- * is intended to provide a common model for succinctly expressing the contextually important
- * properties of these events to loggers that can be pointed to analytics and metrics services. */
+/** Common model for user interaction events in DosGato, designed to capture contextually
+ * important properties for analytics and metrics logging and create enough shared structure
+ * to make it easy to generate meaningful reports and insights. */
 export interface UserEvent extends BaseEvent {
-  /** The page, screen, or dialog the user is looking at in which the associated event emitter is
-   * in context to.
-   * @example '/pages', '/pages/[id]', '/pages/[id]/dialog' */
+  /**
+   * The sveltekit route the user is looking at when the event is triggered.
+   *
+   * Some dialogs will add the dialog name after a '#' for extra context, but this behavior is
+   * deprecated.
+   * @example '/pages', '/pages/[id]', '/pages/[id]#dialog' (deprecated) */
   screen: string
 
-  /** The target the emitted event is to trigger actions on.
-   * Each page/screen, or dialog, needs to set their target for what events in it are targeted
-   * to act on in in its context.
+  /**
+   * Identify a section of the screen to help identify what the user was looking at when
+   * taking the action. Very useful for tabs that do not have their own sveltekit routes.
    *
-   * For example: The page in the page tree of the Pages screen that ActionPanel actions,
-   * such as edit or preview, will act on.
-   * @example '/site3-sandbox/about' */
+   * Also, if interacting inside a modal dialog that has a title,
+   * the title of the dialog could go here.
+   *
+   * Do not duplicate eventType here.
+   */
+  section?: string
+
+  /**
+   * The target of the action reported in the `action` property.
+   *
+   * Each component that logs an event should consider the best value to place here. It's best
+   * if it's human-readable (avoid numeric and UUIDs), specific enough to understand what the user
+   * was doing, but not so unique that an analytics search would never filter or group on it.
+   *
+   * For example: When moving a page, the path of the page being moved. When moving many pages, the
+   * path of the page being moved into. When adding a component to a page, the templateKey of the
+   * component being added.
+   * @example '/site3-sandbox/about', 'hero-banner'
+   * */
   target: string
 }
 

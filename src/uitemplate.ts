@@ -232,40 +232,60 @@ export interface TracingInterface {
   event?: (name: string, details: any, env?: TracingEnvironment) => void
 }
 
-export interface BaseEvent {
+/** Common model for user interaction events in DosGato, designed to capture contextually
+ * important properties for analytics and metrics logging and create enough shared structure
+ * to make it easy to generate meaningful reports and insights. */
+export interface UserEvent {
   /**
-   * The name of the UI component that is recording the event. This should help you track
-   * down where the event is being logged in the code.
+   * The sveltekit route the user is navigated to when the event is triggered. This should
+   * always be a sveltekit route with the param abstracted out. additionalProperties might have
+   * a full path to the page being acted on.
+   * @example '/pages', '/pages/[id]'
+   */
+  screen: string
+
+  /**
+   * An identifier for the log statement in the code. This should be human readable
+   * but also help developers find the log statement in the codebase.
    *
    * @example 'ActionPanel', 'PageEditor', 'ComponentDialog'
    */
   eventType: string
 
-  /** The specific action the user took. Typically the label for the element that emits
-   * the event.
+  /**
+   * The specific action the user took. If you are logging a button click, it's probably the
+   * button label. If you are logging a page view, whether it's a first page view or a CSR navigation.
+   * If you're logging a modal, 'Open', 'Success', 'Failed', 'Cancel', etc.
    * @example 'Add Page', 'Edit Page', 'Preview', 'Cancel Preview' */
   action: string
 
-  /** Additional data points specific to a particular event type's context. These should
+  /**
+   * The target of the action reported in the `action` property.
+   *
+   * Each component that logs an event should consider the best value to place here. It's best
+   * if it's human-readable (avoid numeric and UUIDs) and consistent enough to use in lots of different
+   * reports. In DosGato, we try to record the path to the page, asset, or data item being manipulated,
+   * even if the action is more fine-grained, like adding a component to a specific area. This allows us
+   * to make reports about pages being edited regardless of the type of edit. We can store the path to the
+   * area or component being edited in `additionalProperties`.
+   *
+   * For example: When moving a page, the path of the page being moved. When moving many pages, the
+   * path of the page being moved into.
+   * @example '/site3-sandbox/about'
+   * */
+  target?: string
+
+  /**
+   * Additional data points specific to a particular event type's context. These should
    * be significant enough to understanding the event to merit adding additional columns
    * in tools like elastic-search.
-   * @warning This is NOT a catch-all property. It should be used for metrics an analytics
-   * report would be likely to filter or group by.
-   * @example { hiddenLabel: action.hiddenLabel } // The aria label for an action element. */
-  additionalProperties?: Record<string, string | undefined>
-}
-
-/** Common model for user interaction events in DosGato, designed to capture contextually
- * important properties for analytics and metrics logging and create enough shared structure
- * to make it easy to generate meaningful reports and insights. */
-export interface UserEvent extends BaseEvent {
-  /**
-   * The sveltekit route the user is looking at when the event is triggered.
    *
-   * Some sub-screens will add a section name after a '#' for extra context, but this behavior is
-   * deprecated.
-   * @example '/pages', '/pages/[id]', '/pages/[id]#tab1' (deprecated) */
-  screen: string
+   * @warning This is NOT a catch-all property. It should be used for metrics an analytics
+   * report would be likely to filter or group by. Every new property name likely forces the
+   * analytics database to add a new column that is null for every event that doesn't use it.
+   * @example { path: 'areas.main' } // when adding a component, the area we're adding to
+   */
+  additionalProperties?: Record<string, string | undefined>
 
   /**
    * In some cases `screen` may be too ambiguous to understand where the user was. For instance,
@@ -277,20 +297,6 @@ export interface UserEvent extends BaseEvent {
    * `{ screen: '/pages/[id]#tab1' }` format would have made sense pre-deprecation.
    */
   section?: string
-
-  /**
-   * The target of the action reported in the `action` property.
-   *
-   * Each component that logs an event should consider the best value to place here. It's best
-   * if it's human-readable (avoid numeric and UUIDs), specific enough to understand what the user
-   * was doing, but not so unique that an analytics search would never filter or group on it.
-   *
-   * For example: When moving a page, the path of the page being moved. When moving many pages, the
-   * path of the page being moved into. When adding a component to a page, the templateKey of the
-   * component being added.
-   * @example '/site3-sandbox/about', 'hero-banner'
-   * */
-  target: string
 }
 
 interface AssetMetaDisplay {

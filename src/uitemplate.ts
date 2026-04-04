@@ -262,19 +262,19 @@ export interface UserEvent extends BaseEvent {
   /**
    * The sveltekit route the user is looking at when the event is triggered.
    *
-   * Some dialogs will add the dialog name after a '#' for extra context, but this behavior is
+   * Some sub-screens will add a section name after a '#' for extra context, but this behavior is
    * deprecated.
-   * @example '/pages', '/pages/[id]', '/pages/[id]#dialog' (deprecated) */
+   * @example '/pages', '/pages/[id]', '/pages/[id]#tab1' (deprecated) */
   screen: string
 
   /**
-   * Identify a section of the screen to help identify what the user was looking at when
-   * taking the action. Very useful for tabs that do not have their own sveltekit routes.
+   * In some cases `screen` may be too ambiguous to understand where the user was. For instance,
+   * a screen might have tabs at the top of the page that switch between very different functionalities
+   * without changing the sveltekit route. Or a dashboard might have multiple independent widgets and
+   * we'd like to know which they were interacting with.
    *
-   * Also, if interacting inside a modal dialog that has a title,
-   * the title of the dialog could go here.
-   *
-   * Do not duplicate eventType here.
+   * This property can be used in those situations to disambiguate. Use it when the deprecated
+   * `{ screen: '/pages/[id]#tab1' }` format would have made sense pre-deprecation.
    */
   section?: string
 

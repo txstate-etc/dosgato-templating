@@ -426,6 +426,23 @@ export interface UIConfig {
     icon?: IconOrSVG
   }[]
 
+  /** Optional links for the dashboard site detail page links.
+ * If a URL is not provided, its corresponding link will be not be shown. */
+  dashboardActions?: {
+    /** URL for updating the owner and/or managers for a site. */
+    updateWebsiteManagementUrl?: string
+    /** URL for requesting that a site be decommissioned. */
+    requestSiteDecommissionUrl?: string
+    /** URL for contacting your local support organization. */
+    contactSupportUrl?: string
+    /** URL for a web page defining access levels. */
+    defineAccessLevelUrl?: string
+    /** URL for a web page defining roles. */
+    defineRolesUrl?: string
+    /** URL for defining the pagetree. */
+    definePagetreeUrl?: string
+  }
+
   /** Non-Awaited async call for logging interface interactions if defined.
    * Useful for defining how to log form submissions, interaction clicks, page edits, or state
    * changes of different interfaces. Can be directed to separate endpoint for APM logging as

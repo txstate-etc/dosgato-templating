@@ -429,17 +429,42 @@ export interface UIConfig {
   /** Optional links for the dashboard site detail page links.
  * If a URL is not provided, its corresponding link will be not be shown. */
   dashboardActions?: {
-    /** URL for updating the owner and/or managers for a site. */
+    /**
+     * URL for updating the owner and/or managers for a site.
+     *
+     * DosGato assumes that site governance is managed by centralized administrators. Site
+     * owners and managers would need to contact that team via a support channel to request a
+     * change.
+     *
+     * Use this URL to expose that support channel directly in our Dashboard UI.
+     *
+     * If we move that request process inside the DosGato UI in the future, this setting will
+     * override that functionality and ensure users continue to contact your support through
+     * your desired channel.
+     */
     updateWebsiteManagementUrl?: string
-    /** URL for requesting that a site be decommissioned. */
+    /**
+     * URL for requesting that a site be decommissioned.
+     *
+     * See the comment for updateWebsiteManagementUrl, this is the same concept.
+     */
     requestSiteDecommissionUrl?: string
-    /** URL for contacting your local support organization. */
+    /** Generic URL for contacting your local support organization. */
     contactSupportUrl?: string
-    /** URL for a web page defining access levels. */
+    /**
+     * URL for an informational web page defining access levels for an audience of site
+     * owners and managers.
+     */
     defineAccessLevelUrl?: string
-    /** URL for a web page defining roles. */
+    /**
+     * URL for an informational web page defining roles for an audience of site owners
+     * and managers.
+     */
     defineRolesUrl?: string
-    /** URL for defining the pagetree. */
+    /**
+     * URL for an informational web page defining the pagetree for an audience of site
+     * owners and managers.
+     */
     definePagetreeUrl?: string
   }
 

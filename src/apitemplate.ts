@@ -152,6 +152,9 @@ export interface APITemplate<DataType> {
    * Provide this function to do work like that. It will only be called when content is being
    * copied, i.e. the original still exists.
    *
+   * This function must mutate the `data` parameter in place; the void return type is intentional.
+   * Any changes you want to keep should be made directly to `data` (and `workspace`), not returned.
+   *
    * The pageCopy parameter will be true when an entire page is being copied, and false when a
    * component or data entry is being copied. Sometimes you will want to behave differently in
    * those cases. For instance, if you generate a unique id and then make references to it on
@@ -174,6 +177,9 @@ export interface APITemplate<DataType> {
    * archiving and restoring pages, so we'd prefer to restore them exactly as they were. However,
    * since the original can still exist, anything that MUST be globally unique should be regenerated,
    * just in case.
+   *
+   * As with onCopy, this function must mutate the `data` parameter in place; the void return type
+   * is intentional and any changes should be made directly to `data` (and `workspace`).
    */
   onImport?: (data: DataType, workspace: Record<string, any>) => void
 

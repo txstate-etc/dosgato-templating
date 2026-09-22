@@ -302,6 +302,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     const full = !!(opts?.max && ownedComponentCount >= opts.max)
     const wrap = opts?.wrap ?? defaultWrap
     let output = this.renderComponents(components, { ...opts, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
+    if (full && this.editMode) output += Component.areaFull(this.areaPath(areaName))
     if (!opts?.skipBars && !opts?.skipNewBar && this.editMode) {
       let bar: string | undefined
       if (full) {
@@ -405,7 +406,15 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     options.label ??= this.newLabel(areaName) ?? (this.areas.size > 1 ? `Add ${areaName} Content` : `Add ${this.autoLabel} Content`)
     options.extraClass = [options.extraClass, this.newClass(areaName)].filter(isNotBlank).join(' ')
     options.editMode ??= this.editMode
-    return Component.newBar([this.path, 'areas', areaName].filter(isNotBlank).join('.'), options)
+    return Component.newBar(this.areaPath(areaName), options)
+  }
+
+  /**
+   * Get the dot-separated path to one of this component's areas within the
+   * page data, e.g. for use with the static bar-rendering functions
+   */
+  areaPath (areaName: string) {
+    return [this.path, 'areas', areaName].filter(isNotBlank).join('.')
   }
 
   /**
@@ -414,6 +423,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   static editBar: (path: string, opts: EditBarOpts) => string
   static newBar: (path: string, opts: NewBarOpts) => string
+  static areaFull: (path: string) => string
 
   // the constructor is part of the recursive hydration mechanism: constructing
   // a Component will also construct/hydrate all its child components

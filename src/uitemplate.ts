@@ -211,6 +211,20 @@ export interface DialogPageProp {
   id: string
   path: string
   data: PageData
+  /** the last segment of the page's path */
+  name: string
+  /** how the editor titled the page, may be empty - use `fallbackTitle` to guarantee a value */
+  title?: string
+  /** the page title, or a title generated from the page name if the editor did not enter one */
+  fallbackTitle: string
+  site: {
+    id: string
+    name: string
+  }
+  pagetree: {
+    id: string
+    type: string
+  }
 }
 
 /**

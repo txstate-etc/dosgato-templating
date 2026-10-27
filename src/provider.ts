@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-extraneous-class */
-
 export interface CSSBlock {
   /**
    * The CSS as a string. Provide either this or `path`.

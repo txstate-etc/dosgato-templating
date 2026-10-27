@@ -19,7 +19,7 @@ export function printHeader (ctx: ContextBase, content: string | undefined | nul
   return `<h${level}${attr}>${content}</h${level}>`
 }
 
-export function advanceHeader <T extends ContextBase> (ctx: T, content: string | undefined | null) {
+export function advanceHeader<T extends ContextBase> (ctx: T, content: string | undefined | null) {
   if (!isBlank(content)) ctx.headerLevel = (ctx.headerLevel ?? 1) + 1
   return ctx
 }

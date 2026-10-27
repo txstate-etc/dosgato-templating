@@ -21,7 +21,7 @@ export interface ValidationFeedback {
  * do advanced logic when validating or migrating data, e.g. looking up a name in the
  * API to make sure it hasn't been used already.
  */
-export interface PageExtras <DataType = PageData> {
+export interface PageExtras<DataType = PageData> {
   /** A function for executing a graphql query to acquire more information than is already at hand. Queries are executed by the system user, so be careful with it. */
   query: GraphQLQueryFn
   /** The site id in which the page lives or is being created. Null if we are validating creation of a site. */
@@ -46,7 +46,7 @@ export interface PageExtras <DataType = PageData> {
    */
   page?: DataType
 }
-export interface ComponentExtras <DataType = ComponentData> extends PageExtras {
+export interface ComponentExtras<DataType = ComponentData> extends PageExtras {
   /** The path within the page data to the component currently being evaluated. */
   path: string
   /**
@@ -374,7 +374,7 @@ export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTem
  * If you're migrating a component template, you'll also get the page record and the
  * path inside that page's data to the component being migrated.
  */
-export interface Migration <DataType, ExtraType> {
+export interface Migration<DataType, ExtraType> {
   createdAt: Date
   up: (data: DataType, extras: ExtraType) => DataType | Promise<DataType>
   down: (data: DataType, extras: ExtraType) => DataType | Promise<DataType>

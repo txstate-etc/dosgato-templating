@@ -36,8 +36,8 @@ export interface UITemplateBase {
    * - data: ComponentData, the current data on the page, should not be mutated during editing,
    *   undefined when creating
    * - page: DialogPageProp, the current page so that you can reference the full page data or
-   *   make a further graphql query based on its id/path. Component dialogs only, page and data
-   *   dialogs do not receive this prop
+   *   make a further graphql query based on its id/path. Page dialogs receive it when editing
+   *   page properties but not when creating a new page. Data dialogs do not receive this prop
    * - templateProperties: the template properties for the current page template, so you can make
    *   things like color pickers that visually match the colors of the current page template.
    *   Data dialogs do not receive this.
@@ -205,7 +205,8 @@ export interface UITemplateData extends UITemplateBase {
 
 /**
  * This is a type for the data that will be passed to dialog Svelte components as
- * the `page` prop. Note that page template dialogs do NOT receive this prop.
+ * the `page` prop. Page template dialogs receive it when editing page properties, but
+ * NOT when creating a new page. Data template dialogs never receive it.
  */
 export interface DialogPageProp {
   id: string

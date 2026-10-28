@@ -207,6 +207,23 @@ export interface APIComponentTemplate<DataType extends ComponentData = any> exte
   areas?: Record<string, string[]>
 
   /**
+   * Templates may also declare area name prefixes, for areas whose names are generated per
+   * page or component instead of being fixed. For instance, a page editor might define any number
+   * of sections, each with its own area named `freeform_` plus a generated suffix. Keys are
+   * prefixes and values are the template keys of components permitted, just like `areas`.
+   *
+   * When looking up an area by name, an exact match in `areas` wins. Otherwise the longest
+   * prefix in `dynamicAreas` that the name starts with wins. Otherwise the area is undeclared.
+   *
+   * Full area names (prefix + suffix) must match /^\w+$/ because the admin UI parses area paths
+   * with that pattern. The API will refuse to start if a prefix is identical to a static area
+   * name in the same template.
+   *
+   * Example: `dynamicAreas: { freeform_: ['my-component'] }`
+   */
+  dynamicAreas?: Record<string, string[]>
+
+  /**
    * Each template must provide a validation function so that the API can enforce its data is
    * shaped properly.
    *
@@ -241,6 +258,14 @@ export interface APIPageTemplate<DataType extends PageData = any> extends APITem
    * Page areas are the same as components but are required.
    */
   areas?: Record<string, string[]>
+
+  /**
+   * Page dynamic areas are the same as components. Keys are area name prefixes, e.g.
+   * `dynamicAreas: { freeform_: ['my-section'] }`. An exact match in `areas` wins, then the
+   * longest matching prefix. Full area names must match /^\w+$/ and a prefix may not be
+   * identical to a static area name in the same template.
+   */
+  dynamicAreas?: Record<string, string[]>
 
   /**
    * Page template implementations do not receive a path like component templates do.
@@ -345,6 +370,24 @@ export interface APIDataTemplate<DataType extends DataData = any> extends APITem
 }
 
 export type APIAnyTemplate = APIComponentTemplate | APIPageTemplate | APIDataTemplate
+
+/**
+ * Find the entry for an area name, given a template's static `areas` and `dynamicAreas`
+ * (or anything keyed the same way, as a Record or a Map). An exact match in `areas` wins,
+ * then the longest matching prefix in `dynamicAreas`. Returns undefined when the area is
+ * undeclared.
+ */
+export function matchArea<T> (areaName: string, areas: Record<string, T> | Map<string, T> | undefined, dynamicAreas: Record<string, T> | Map<string, T> | undefined): T | undefined {
+  if (areas instanceof Map) {
+    if (areas.has(areaName)) return areas.get(areaName)
+  } else if (areas && Object.prototype.hasOwnProperty.call(areas, areaName)) return areas[areaName]
+  const entries = dynamicAreas instanceof Map ? Array.from(dynamicAreas) : Object.entries(dynamicAreas ?? {})
+  let match: [string, T] | undefined
+  for (const entry of entries) {
+    if (areaName.startsWith(entry[0]) && entry[0].length > (match?.[0].length ?? -1)) match = entry
+  }
+  return match?.[1]
+}
 
 /**
  * In dosgato CMS, the data in the database is not altered except during user activity. This

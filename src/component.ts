@@ -372,6 +372,9 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    *
    * For instance, an area that only accepts 'layout' components could
    * return "Add Layout"
+   *
+   * Components with dynamic areas should override this, because the default label
+   * would show the raw generated area name.
    */
   newLabel (areaName: string): string | undefined { return undefined }
 

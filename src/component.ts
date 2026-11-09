@@ -301,6 +301,18 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     const ownedComponentCount = components.filter(c => !c.component.inheritedFrom).length
     const full = !!(opts?.max && ownedComponentCount >= opts.max)
     const wrap = opts?.wrap ?? defaultWrap
+    if (isNotBlank(opts?.defaultContent)) {
+      if (opts.max === 1 && components.length <= 1) return this.renderCustomizableArea(areaName, components, opts.defaultContent, opts)
+      if (components.length === 0) {
+        if (opts.skipContent && !this.editMode) return ''
+        let output = opts.skipContent ? '' : wrap({ output: opts.defaultContent, content: opts.defaultContent, bar: '', indexInArea: 0, siblings: [] })
+        if (!opts.skipBars && !opts.skipNewBar && this.editMode) {
+          const bar = this.newBar(areaName, opts.newBarOpts)
+          output += wrap({ output: bar, content: '', bar, indexInArea: 0, siblings: [] })
+        }
+        return output
+      }
+    }
     let output = this.renderComponents(components, { ...opts, editBarOpts: { ...opts?.editBarOpts, disableDelete: ownedComponentCount <= (opts?.min ?? 0), disableDrop: full } })
     if (full && this.editMode) output += Component.areaFull(this.areaPath(areaName))
     if (!opts?.skipBars && !opts?.skipNewBar && this.editMode) {
@@ -314,6 +326,33 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
       }
       if (bar != null) output += wrap({ output: bar, content: '', bar, indexInArea: components.length, siblings: components.map(c => c.component) })
     }
+    return output
+  }
+
+  /**
+   * renderArea with defaultContent and max: 1, when the area holds zero or one owned
+   * components and nothing inherited. Renders a Customize Bar in place of the New bar
+   * and edit bar.
+   */
+  protected renderCustomizableArea (areaName: string, components: RenderedComponent[], defaultContent: string, opts: RenderAreaOpts) {
+    if (opts.skipContent && !this.editMode) return ''
+    const wrap = opts.wrap ?? defaultWrap
+    const showBar = this.editMode && !opts.skipBars && !opts.skipEditBars
+    const c = components[0]
+    if (c == null) {
+      const bar = showBar ? this.customizeBar(areaName, { ...opts.customizeBarOpts, customized: false }) : ''
+      const content = opts.skipContent ? '' : defaultContent
+      if (!bar && !content) return ''
+      return wrap({ output: bar + content, content, bar, indexInArea: 0, siblings: [] })
+    }
+    // a component that prints its own edit bar keeps it where it put it, but as a Customize Bar
+    const ownBar = c.component.renderIncludesEditBar && this.editMode ? c.component.renderedEditBar : undefined
+    const swapOwnBar = !!ownBar && c.output.includes(ownBar)
+    const customizeBar = (showBar || swapOwnBar) ? this.customizeBar(areaName, { ...opts.customizeBarOpts, customized: true }, c.component) : ''
+    const bar = showBar && !swapOwnBar ? customizeBar : ''
+    const content = opts.skipContent ? '' : swapOwnBar ? c.output.replaceAll(ownBar, customizeBar) : c.output
+    let output = wrap({ output: bar + content, content, bar, component: c.component, indexInArea: 0, siblings: [c.component] })
+    if (this.editMode) output += Component.areaFull(this.areaPath(areaName))
     return output
   }
 
@@ -367,6 +406,12 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   renderIncludesEditBar = false
 
   /**
+   * The last edit bar returned by editBar(), so that renderArea can swap it for a
+   * Customize Bar when this component customizes an area that has defaultContent and max: 1
+   */
+  renderedEditBar?: string
+
+  /**
    * Components may override this function to give their new bars a custom
    * label
    *
@@ -385,6 +430,27 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   newClass (areaName: string): string | undefined { return undefined }
 
   /**
+   * Components may override this function to give their customize bars a custom
+   * label
+   *
+   * Customize bars appear when renderArea is called with defaultContent and max: 1.
+   *
+   * Components with dynamic areas should override this, because the default label
+   * would show the raw generated area name.
+   *
+   * When the area has been customized, `component` is the owned component that replaced
+   * the default content. Its label (editLabel() or autoLabel) is appended to the returned
+   * label unless the returned label already contains it.
+   */
+  customizeBarLabel (areaName: string, component?: Component): string | undefined { return undefined }
+
+  /**
+   * Components may override this function to give their customize bars a custom
+   * CSS class
+   */
+  customizeBarClass (areaName: string): string | undefined { return undefined }
+
+  /**
    * Components may override this function to provide a custom edit bar
    *
    * Generally should not be overridden - override editLabel and editClass instead
@@ -396,7 +462,8 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
     options.editMode ??= this.editMode
     options.inheritedFrom ??= this.inheritedFrom
     options.hideEdit = this.noData || options.hideEdit
-    return Component.editBar(this.path, options)
+    this.renderedEditBar = Component.editBar(this.path, options)
+    return this.renderedEditBar
   }
 
   /**
@@ -413,6 +480,32 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
   }
 
   /**
+   * Components may override this function to provide a custom customize bar
+   *
+   * When opts.customized is true, pass the owned component that replaced the default
+   * content so the bar can target it. renderArea does this for you.
+   *
+   * Generally should not be overridden - override customizeBarLabel and customizeBarClass instead
+   */
+  customizeBar (areaName: string, opts: CustomizeBarOpts = {}, component?: Component) {
+    const options = { ...opts }
+    const customizing = options.customized ? component : undefined
+    if (options.label == null) {
+      const label = this.customizeBarLabel(areaName, customizing) ?? (this.areas.size > 1 ? `Customize ${areaName}` : `Customize ${this.autoLabel}`)
+      // name the customizing component so editors can tell which type replaced the default
+      const componentLabel = customizing ? customizing.editLabel() ?? customizing.autoLabel : undefined
+      options.label = isNotBlank(componentLabel) && !label.includes(componentLabel) ? `${label}: ${componentLabel}` : label
+    }
+    options.extraClass = [options.extraClass, this.customizeBarClass(areaName)].filter(isNotBlank).join(' ')
+    options.editMode ??= this.editMode
+    if (options.customized && component) {
+      options.hideEdit = component.noData || options.hideEdit
+      return Component.customizeBar(component.path, options)
+    }
+    return Component.customizeBar(this.areaPath(areaName), options)
+  }
+
+  /**
    * Get the dot-separated path to one of this component's areas within the
    * page data, e.g. for use with the static bar-rendering functions
    */
@@ -426,6 +519,7 @@ export abstract class Component<DataType extends ComponentData = any, FetchedTyp
    */
   static editBar: (path: string, opts: EditBarOpts) => string
   static newBar: (path: string, opts: NewBarOpts) => string
+  static customizeBar: (path: string, opts: CustomizeBarOpts) => string
   static areaFull: (path: string) => string
 
   // the constructor is part of the recursive hydration mechanism: constructing
@@ -612,6 +706,19 @@ export interface NewBarOpts extends BarOpts {
   disableAddToTop?: boolean
 }
 
+export interface CustomizeBarOpts extends BarOpts {
+  /**
+   * true when the area has an owned component replacing the default content; the
+   * bar then targets that component instead of the area
+   */
+  customized?: boolean
+  /**
+   * hide the edit (pencil) action in the customized state, e.g. because the customizing
+   * component never accepts data
+   */
+  hideEdit?: boolean
+}
+
 export interface RenderComponentsWrapParams {
   /**
    * Contains both the regular component content and the edit bar (or the new bar).
@@ -758,6 +865,25 @@ export interface RenderAreaOpts extends RenderComponentsOpts {
    * be overridden if you have set a max.
    */
   newBarOpts?: NewBarOpts
+  /**
+   * HTML to render when the area has no owned components. Any async data it needs
+   * should be loaded in `fetch()`.
+   *
+   * When `max` is 1, edit mode shows a Customize Bar instead of the New bar and edit bar.
+   * It targets the area when empty, or the owned component once customized. If the area
+   * has inherited components or more than one owned component, it renders normally.
+   *
+   * The Customize Bar is treated like an edit bar for `skipBars`, `skipEditBars`, and
+   * `renderIncludesEditBar`.
+   *
+   * With any other `max`, the default HTML is shown with the New bar while the area is empty.
+   */
+  defaultContent?: string
+  /**
+   * Options to pass into the Customize Bar. Only used when `defaultContent` is set
+   * and `max` is 1.
+   */
+  customizeBarOpts?: CustomizeBarOpts
 }
 
 export interface RenderedComponent<C extends Component = Component> {
